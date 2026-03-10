@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
 import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
+import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/pages/login_page.dart';
 import 'package:my_diary/ui/view_models/login_view_model.dart';
 
@@ -21,7 +22,9 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Encontrar diário'));
+    await tester.tap(
+      find.widgetWithText(AppPrimaryButton, 'Encontrar diário'),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Informe o diário que deseja encontrar'), findsOneWidget);
@@ -35,7 +38,9 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextFormField), 'diario@123');
-    await tester.tap(find.text('Encontrar diário'));
+    await tester.tap(
+      find.widgetWithText(AppPrimaryButton, 'Encontrar diário'),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Use apenas letras, números e espaço'), findsOneWidget);
@@ -49,7 +54,9 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextFormField), 'Trabalho');
-    await tester.tap(find.text('Encontrar diário'));
+    await tester.tap(
+      find.widgetWithText(AppPrimaryButton, 'Encontrar diário'),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Diário encontrado: Trabalho'), findsOneWidget);
