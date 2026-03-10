@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
 import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
@@ -28,27 +27,18 @@ void main() {
     expect(find.text('Informe o diário que deseja encontrar'), findsOneWidget);
   });
 
-  testWidgets('configura formatter para bloquear caracteres especiais', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('exibe erro para caracteres especiais', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: LoginPage(viewModel: buildViewModel()),
       ),
     );
 
-    final field = tester.widget<TextFormField>(find.byType(TextFormField));
-    final formatters = field.inputFormatters ?? <TextInputFormatter>[];
+    await tester.enterText(find.byType(TextFormField), 'diario@123');
+    await tester.tap(find.text('Encontrar diário'));
+    await tester.pumpAndSettle();
 
-    expect(formatters.whereType<FilteringTextInputFormatter>(), isNotEmpty);
-
-    final formatter = FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]'));
-    final formatted = formatter.formatEditUpdate(
-      const TextEditingValue(),
-      const TextEditingValue(text: 'diario@123'),
-    );
-
-    expect(formatted.text, 'diario123');
+    expect(find.text('Use apenas letras, números e espaço'), findsOneWidget);
   });
 
   testWidgets('mostra feedback quando diário é encontrado', (WidgetTester tester) async {
