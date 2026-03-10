@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/ui/pages/login_page.dart';
 
 void main() {
@@ -11,7 +12,7 @@ class MyDiaryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My Diary',
+      title: AppStrings.appName,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,

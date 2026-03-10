@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/ui/widgets/diary_search_field.dart';
 
 class LoginPage extends StatefulWidget {
@@ -50,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Text(
-                      'Login',
+                      AppStrings.loginTitle,
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
