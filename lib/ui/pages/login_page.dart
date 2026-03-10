@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
+import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
+import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
 import 'package:my_diary/ui/view_models/login_view_model.dart';
 import 'package:my_diary/ui/widgets/diary_search_field.dart';
 
@@ -47,30 +49,26 @@ class _LoginPageState extends State<LoginPage> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
-          child: Card(
-            margin: const EdgeInsets.all(24),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Text(
-                      AppStrings.loginTitle,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    DiarySearchField(controller: _queryController),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: _onFindDiary,
-                      child: const Text('Encontrar diário'),
-                    ),
-                  ],
-                ),
+          child: AppSurfaceCard(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    AppStrings.loginTitle,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  DiarySearchField(controller: _queryController),
+                  const SizedBox(height: 16),
+                  AppPrimaryButton(
+                    onPressed: _onFindDiary,
+                    label: 'Encontrar diário',
+                  ),
+                ],
               ),
             ),
           ),
