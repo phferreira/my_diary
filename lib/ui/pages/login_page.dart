@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
+import 'package:my_diary/ui/view_models/login_view_model.dart';
 import 'package:my_diary/ui/widgets/diary_search_field.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({
+    required this.viewModel,
+    super.key,
+  });
+
+  final LoginViewModel viewModel;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -19,18 +25,19 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _onFindDiary() {
+  Future<void> _onFindDiary() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       return;
     }
 
+    final message = await widget.viewModel.findDiaryMessage(_queryController.text);
+    if (!mounted) {
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Buscando diário: ${_queryController.text.trim()}',
-        ),
-      ),
+      SnackBar(content: Text(message)),
     );
   }
 
