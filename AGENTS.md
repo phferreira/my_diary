@@ -11,6 +11,8 @@ This project is a personal website built with **Flutter Web** (Dart), published 
 - Prefer small, reusable widgets; avoid putting too much logic directly inside `build`.
 - Keep consistency with `analysis_options.yaml` and run `dart format` on changed files.
 - For relevant visual changes, validate locally on web (`flutter run -d chrome`) and include evidence when possible.
+- Consider the existing **Design System** when developing or updating widgets, keeping visual and behavioral consistency across the app.
+- Before adding text directly in widgets, check and prefer string constants in `lib/core/constants/app_strings.dart`.
 
 ## Architecture standard
 - Follow **Clean Architecture** principles for all new features.
