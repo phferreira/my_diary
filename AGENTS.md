@@ -45,3 +45,8 @@ flutter test
 ```
 
 If any command cannot be run due to environment limitations, document it in the final summary.
+
+## Version control standard
+- Use **Conventional Commits** as the default for all commit messages.
+- Follow the format: `type(scope): short description`.
+- Prefer clear types such as `feat`, `fix`, `docs`, `refactor`, `test`, and `chore`.
