@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
+import 'package:my_diary/core/usecases/find_diary_use_case.dart';
+import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
 import 'package:my_diary/ui/pages/login_page.dart';
+import 'package:my_diary/ui/view_models/login_view_model.dart';
 
 void main() {
-  runApp(const MyDiaryApp());
+  final repository = InMemoryDiaryRepository();
+  final findDiaryUseCase = FindDiaryUseCase(repository);
+  final loginViewModel = LoginViewModel(findDiaryUseCase);
+
+  runApp(MyDiaryApp(loginViewModel: loginViewModel));
 }
 
 class MyDiaryApp extends StatelessWidget {
-  const MyDiaryApp({super.key});
+  const MyDiaryApp({
+    required this.loginViewModel,
+    super.key,
+  });
+
+  final LoginViewModel loginViewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +29,7 @@ class MyDiaryApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const LoginPage(),
+      home: LoginPage(viewModel: loginViewModel),
     );
   }
 }
