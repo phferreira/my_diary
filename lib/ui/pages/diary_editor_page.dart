@@ -23,8 +23,6 @@ class DiaryEditorPage extends StatefulWidget {
 class _DiaryEditorPageState extends State<DiaryEditorPage> {
   late final TextEditingController _contentController;
 
-  bool _isBold = false;
-  bool _isItalic = false;
   TextAlign _textAlign = TextAlign.left;
 
   @override
@@ -54,6 +52,66 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     );
   }
 
+  void _applyMarkdownMarker(String marker) {
+    final text = _contentController.text;
+    final selection = _contentController.selection;
+
+    if (!selection.isValid || text.isEmpty) {
+      return;
+    }
+
+    final targetSelection = selection.isCollapsed
+        ? _expandToCurrentWord(text, selection.start)
+        : selection;
+
+    if (!targetSelection.isValid || targetSelection.start == targetSelection.end) {
+      return;
+    }
+
+    final selectedText = text.substring(targetSelection.start, targetSelection.end);
+    final wrappedText = selectedText.startsWith(marker) &&
+            selectedText.endsWith(marker) &&
+            selectedText.length > marker.length * 2
+        ? selectedText.substring(marker.length, selectedText.length - marker.length)
+        : '$marker$selectedText$marker';
+
+    final updatedText = text.replaceRange(
+      targetSelection.start,
+      targetSelection.end,
+      wrappedText,
+    );
+
+    _contentController.value = TextEditingValue(
+      text: updatedText,
+      selection: TextSelection.collapsed(
+        offset: targetSelection.start + wrappedText.length,
+      ),
+    );
+  }
+
+  TextSelection _expandToCurrentWord(String text, int cursorPosition) {
+    if (cursorPosition < 0 || cursorPosition > text.length) {
+      return const TextSelection.collapsed(offset: -1);
+    }
+
+    var start = cursorPosition;
+    var end = cursorPosition;
+
+    while (start > 0 && !_isWordBoundary(text[start - 1])) {
+      start--;
+    }
+
+    while (end < text.length && !_isWordBoundary(text[end])) {
+      end++;
+    }
+
+    return TextSelection(baseOffset: start, extentOffset: end);
+  }
+
+  bool _isWordBoundary(String char) {
+    return RegExp(r'\s').hasMatch(char);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 700;
@@ -76,24 +134,14 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                   runSpacing: 8,
                   children: <Widget>[
                     IconButton(
-                      tooltip: 'Negrito',
-                      onPressed: () => setState(() => _isBold = !_isBold),
-                      icon: Icon(
-                        Icons.format_bold,
-                        color: _isBold
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
+                      tooltip: 'Negrito (.md)',
+                      onPressed: () => _applyMarkdownMarker('**'),
+                      icon: const Icon(Icons.format_bold),
                     ),
                     IconButton(
-                      tooltip: 'Itálico',
-                      onPressed: () => setState(() => _isItalic = !_isItalic),
-                      icon: Icon(
-                        Icons.format_italic,
-                        color: _isItalic
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
+                      tooltip: 'Itálico (.md)',
+                      onPressed: () => _applyMarkdownMarker('*'),
+                      icon: const Icon(Icons.format_italic),
                     ),
                     IconButton(
                       tooltip: 'Alinhar à esquerda',
@@ -137,8 +185,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                     maxLength: 4000,
                     textAlign: _textAlign,
                     style: TextStyle(
-                      fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
-                      fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
                       fontSize: isCompact ? 14 : 16,
                       height: 1.4,
                     ),

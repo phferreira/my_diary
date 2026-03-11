@@ -2,7 +2,6 @@ class AppStrings {
   AppStrings._();
 
   static const String appName = 'My Diary';
-  static const String loginTitle = 'Login';
   static const String findDiaryButton = 'Encontrar diário';
   static const String findDiaryLabel = 'Encontrar diário';
   static const String findDiaryHint = 'Digite o nome do diário';
