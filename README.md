@@ -16,7 +16,7 @@ A aplicação segue uma estrutura inspirada em Clean Architecture:
 2. `LoginViewModel` aciona `FindDiaryUseCase`.
 3. `FindDiaryUseCase` valida a entrada com `DiaryQuery`.
 4. Caso válido, consulta o contrato `DiaryRepository`.
-5. `InMemoryDiaryRepository` retorna o diário correspondente (ou `null`).
+5. `SupabaseDiaryRepository` persiste e consulta dados no Supabase quando configurado.
 6. A UI exibe o resultado com `SnackBar`.
 
 ### Dependências entre camadas
@@ -24,3 +24,30 @@ A aplicação segue uma estrutura inspirada em Clean Architecture:
 - UI depende do Core via casos de uso.
 - Data depende do Core via abstrações de repositório.
 - Core não depende de UI nem de Data.
+
+## Configuração de ambiente (Supabase)
+
+Os dados sensíveis são lidos de variáveis de ambiente em tempo de build usando `--dart-define`, evitando hardcode de chaves no código.
+
+### Variáveis obrigatórias
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+### Executar localmente
+
+```bash
+flutter run -d chrome \
+  --dart-define=SUPABASE_URL=https://SEU-PROJETO.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=SUA_CHAVE_ANON
+```
+
+Quando as variáveis não são informadas, o app usa `InMemoryDiaryRepository` como fallback para facilitar desenvolvimento local.
+
+### Estrutura esperada da tabela `diaries`
+
+- `id` (uuid ou text, chave primária)
+- `name` (text)
+- `content` (text)
+- `password` (text, nullable)
+- `is_public` (bool)
