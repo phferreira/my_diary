@@ -118,6 +118,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(widget.diary.name),
       ),
       body: Align(

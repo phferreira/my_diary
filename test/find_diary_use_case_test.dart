@@ -28,6 +28,20 @@ void main() {
       expect(result, isNull);
     });
 
+
+    test('retorna nulo quando há diferença entre maiúsculas e minúsculas', () async {
+      final repository = InMemoryDiaryRepository(
+        seedDiaries: const <Diary>[
+          Diary(id: '1', name: 'Meu Diario', content: ''),
+        ],
+      );
+      final useCase = FindDiaryUseCase(repository);
+
+      final result = await useCase('meu diario');
+
+      expect(result, isNull);
+    });
+
     test('retorna nulo quando diário não existe', () async {
       final repository = InMemoryDiaryRepository();
       final useCase = FindDiaryUseCase(repository);
