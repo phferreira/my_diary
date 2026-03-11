@@ -32,6 +32,9 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Create Web
+        run: flutter create . --platforms web  
+        
       - name: Build web
         run: flutter build web --release --base-href /${{ github.event.repository.name }}/
 
