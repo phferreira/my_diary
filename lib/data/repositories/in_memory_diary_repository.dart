@@ -32,7 +32,7 @@ class InMemoryDiaryRepository implements DiaryRepository {
   @override
   Future<Diary?> findByName(String query) async {
     for (final diary in _diaries) {
-      if (diary.name.toLowerCase() == query.toLowerCase()) {
+      if (diary.name == query) {
         return diary;
       }
     }
