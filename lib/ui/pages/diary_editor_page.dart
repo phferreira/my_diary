@@ -70,10 +70,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Text(
-                  widget.diary.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
