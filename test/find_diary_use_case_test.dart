@@ -7,7 +7,9 @@ void main() {
   group('FindDiaryUseCase', () {
     test('retorna diário quando nome existe', () async {
       final repository = InMemoryDiaryRepository(
-        seedDiaries: const <Diary>[Diary(id: '1', name: 'Meu Diario')],
+        seedDiaries: const <Diary>[
+          Diary(id: '1', name: 'Meu Diario', content: ''),
+        ],
       );
       final useCase = FindDiaryUseCase(repository);
 
