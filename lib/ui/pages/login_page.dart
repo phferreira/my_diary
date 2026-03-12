@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
@@ -12,11 +13,13 @@ class LoginPage extends StatefulWidget {
   const LoginPage({
     required this.viewModel,
     required this.saveDiaryContentUseCase,
+    this.appVersion,
     super.key,
   });
 
   final LoginViewModel viewModel;
   final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final String? appVersion;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -25,6 +28,33 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _queryController = TextEditingController();
+
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    if (widget.appVersion case final providedVersion? when providedVersion.isNotEmpty) {
+      setState(() => _appVersion = providedVersion);
+      return;
+    }
+
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (!mounted) {
+      return;
+    }
+
+    final buildNumber = packageInfo.buildNumber.trim();
+    final version = buildNumber.isEmpty
+        ? packageInfo.version
+        : '${packageInfo.version}+$buildNumber';
+
+    setState(() => _appVersion = version);
+  }
 
   @override
   void dispose() {
@@ -146,33 +176,49 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: AppSurfaceCard(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Text(
-                    AppStrings.appName,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
+      body: Stack(
+        children: <Widget>[
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: AppSurfaceCard(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        AppStrings.appName,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      DiarySearchField(controller: _queryController),
+                      const SizedBox(height: 16),
+                      AppPrimaryButton(
+                        onPressed: _onFindDiary,
+                        label: AppStrings.findDiaryButton,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  DiarySearchField(controller: _queryController),
-                  const SizedBox(height: 16),
-                  AppPrimaryButton(
-                    onPressed: _onFindDiary,
-                    label: AppStrings.findDiaryButton,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 8,
+            child: Text(
+              _appVersion.isEmpty
+                  ? ''
+                  : '${AppStrings.appVersionPrefix}$_appVersion',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 6),
+            ),
+          ),
+        ],
       ),
     );
   }
