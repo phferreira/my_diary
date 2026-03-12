@@ -31,6 +31,7 @@ void main() {
         home: LoginPage(
           viewModel: deps.viewModel,
           saveDiaryContentUseCase: deps.saveUseCase,
+          appVersion: '1.0.0+1',
         ),
       ),
     );
@@ -51,6 +52,7 @@ void main() {
         home: LoginPage(
           viewModel: deps.viewModel,
           saveDiaryContentUseCase: deps.saveUseCase,
+          appVersion: '1.0.0+1',
         ),
       ),
     );
@@ -72,6 +74,7 @@ void main() {
         home: LoginPage(
           viewModel: deps.viewModel,
           saveDiaryContentUseCase: deps.saveUseCase,
+          appVersion: '1.0.0+1',
         ),
       ),
     );
