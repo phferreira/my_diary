@@ -39,15 +39,17 @@ class Diary {
     String? id,
     String? name,
     String? content,
-    String? password,
+    Object? password = _noChange,
     bool? isPublic,
   }) {
     return Diary(
       id: id ?? this.id,
       name: name ?? this.name,
       content: content ?? this.content,
-      password: password ?? this.password,
+      password: password == _noChange ? this.password : password as String?,
       isPublic: isPublic ?? this.isPublic,
     );
   }
+
+  static const Object _noChange = Object();
 }

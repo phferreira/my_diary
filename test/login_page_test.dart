@@ -3,21 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
 import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
 import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/pages/login_page.dart';
 import 'package:my_diary/ui/view_models/login_view_model.dart';
 
 void main() {
-  ({LoginViewModel viewModel, SaveDiaryContentUseCase saveUseCase})
-      buildDependencies() {
+  ({
+    LoginViewModel viewModel,
+    SaveDiaryContentUseCase saveUseCase,
+    UpdateDiaryAccessUseCase updateAccessUseCase,
+  }) buildDependencies() {
     final repository = InMemoryDiaryRepository();
     final findUseCase = FindDiaryUseCase(repository);
     final createUseCase = CreateDiaryUseCase(repository);
     final saveUseCase = SaveDiaryContentUseCase(repository);
+    final updateAccessUseCase = UpdateDiaryAccessUseCase(repository);
     return (
       viewModel: LoginViewModel(findUseCase, createUseCase),
       saveUseCase: saveUseCase,
+      updateAccessUseCase: updateAccessUseCase,
     );
   }
 
@@ -31,6 +37,7 @@ void main() {
         home: LoginPage(
           viewModel: deps.viewModel,
           saveDiaryContentUseCase: deps.saveUseCase,
+          updateDiaryAccessUseCase: deps.updateAccessUseCase,
           appVersion: '1.0.0+1',
         ),
       ),
@@ -44,7 +51,8 @@ void main() {
     expect(find.text('Informe o diário que deseja encontrar'), findsOneWidget);
   });
 
-  testWidgets('pede senha ao encontrar diário protegido', (WidgetTester tester) async {
+  testWidgets('pede senha ao encontrar diário protegido',
+      (WidgetTester tester) async {
     final deps = buildDependencies();
 
     await tester.pumpWidget(
@@ -52,6 +60,7 @@ void main() {
         home: LoginPage(
           viewModel: deps.viewModel,
           saveDiaryContentUseCase: deps.saveUseCase,
+          updateDiaryAccessUseCase: deps.updateAccessUseCase,
           appVersion: '1.0.0+1',
         ),
       ),
@@ -74,6 +83,7 @@ void main() {
         home: LoginPage(
           viewModel: deps.viewModel,
           saveDiaryContentUseCase: deps.saveUseCase,
+          updateDiaryAccessUseCase: deps.updateAccessUseCase,
           appVersion: '1.0.0+1',
         ),
       ),
