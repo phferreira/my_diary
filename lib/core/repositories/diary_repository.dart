@@ -13,4 +13,10 @@ abstract class DiaryRepository {
     required String id,
     required String content,
   });
+
+  Future<void> updateDiaryAccess({
+    required String id,
+    required bool isPublic,
+    String? password,
+  });
 }

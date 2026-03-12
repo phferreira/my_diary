@@ -76,6 +76,29 @@ class InMemoryDiaryRepository implements DiaryRepository {
     _diaries[index] = _diaries[index].copyWith(content: content);
   }
 
+  @override
+  Future<void> updateDiaryAccess({
+    required String id,
+    required bool isPublic,
+    String? password,
+  }) async {
+    final index = _diaries.indexWhere((Diary diary) => diary.id == id);
+    if (index == -1) {
+      return;
+    }
+
+    final updatedPassword = _resolveUpdatedPassword(
+      diary: _diaries[index],
+      isPublic: isPublic,
+      password: password,
+    );
+
+    _diaries[index] = _diaries[index].copyWith(
+      isPublic: isPublic,
+      password: updatedPassword,
+    );
+  }
+
   String? _buildHashedPassword({
     required String? password,
     required bool isPublic,
@@ -85,5 +108,22 @@ class InMemoryDiaryRepository implements DiaryRepository {
     }
 
     return PasswordHasher.hash(password);
+  }
+
+  String? _resolveUpdatedPassword({
+    required Diary diary,
+    required bool isPublic,
+    required String? password,
+  }) {
+    if (isPublic) {
+      return null;
+    }
+
+    final trimmedPassword = password?.trim();
+    if (trimmedPassword != null && trimmedPassword.isNotEmpty) {
+      return PasswordHasher.hash(trimmedPassword);
+    }
+
+    return diary.password;
   }
 }
