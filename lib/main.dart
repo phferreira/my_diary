@@ -5,6 +5,7 @@ import 'package:my_diary/core/repositories/diary_repository.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
 import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
 import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
 import 'package:my_diary/data/repositories/supabase_diary_repository.dart';
 import 'package:my_diary/ui/design_system/theme/app_theme.dart';
@@ -19,12 +20,14 @@ Future<void> main() async {
   final findDiaryUseCase = FindDiaryUseCase(repository);
   final createDiaryUseCase = CreateDiaryUseCase(repository);
   final saveDiaryContentUseCase = SaveDiaryContentUseCase(repository);
+  final updateDiaryAccessUseCase = UpdateDiaryAccessUseCase(repository);
   final loginViewModel = LoginViewModel(findDiaryUseCase, createDiaryUseCase);
 
   runApp(
     MyDiaryApp(
       loginViewModel: loginViewModel,
       saveDiaryContentUseCase: saveDiaryContentUseCase,
+      updateDiaryAccessUseCase: updateDiaryAccessUseCase,
     ),
   );
 }
@@ -49,11 +52,13 @@ class MyDiaryApp extends StatelessWidget {
   const MyDiaryApp({
     required this.loginViewModel,
     required this.saveDiaryContentUseCase,
+    required this.updateDiaryAccessUseCase,
     super.key,
   });
 
   final LoginViewModel loginViewModel;
   final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +68,7 @@ class MyDiaryApp extends StatelessWidget {
       home: LoginPage(
         viewModel: loginViewModel,
         saveDiaryContentUseCase: saveDiaryContentUseCase,
+        updateDiaryAccessUseCase: updateDiaryAccessUseCase,
       ),
     );
   }
