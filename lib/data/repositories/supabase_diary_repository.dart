@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseDiaryRepository implements DiaryRepository {
   SupabaseDiaryRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
@@ -58,8 +58,26 @@ class SupabaseDiaryRepository implements DiaryRepository {
   }) {
     return _client
         .from(_tableName)
-        .update(<String, dynamic>{'content': content})
-        .eq('id', id);
+        .update(<String, dynamic>{'content': content}).eq('id', id);
+  }
+
+  @override
+  Future<void> updateDiaryAccess({
+    required String id,
+    required bool isPublic,
+    String? password,
+  }) {
+    final updatedPassword = _resolveUpdatedPassword(
+      isPublic: isPublic,
+      password: password,
+    );
+
+    final payload = <String, dynamic>{'is_public': isPublic};
+    if (updatedPassword != _omitPasswordUpdate) {
+      payload['password'] = updatedPassword;
+    }
+
+    return _client.from(_tableName).update(payload).eq('id', id);
   }
 
   Diary _toDiary(Map<String, dynamic> json) {
@@ -82,4 +100,26 @@ class SupabaseDiaryRepository implements DiaryRepository {
 
     return PasswordHasher.hash(password);
   }
+
+  String? _resolveUpdatedPassword({
+    required bool isPublic,
+    required String? password,
+  }) {
+    if (isPublic) {
+      return null;
+    }
+
+    final trimmedPassword = password?.trim();
+    if (trimmedPassword == null) {
+      return _omitPasswordUpdate;
+    }
+
+    if (trimmedPassword.isEmpty) {
+      return null;
+    }
+
+    return PasswordHasher.hash(trimmedPassword);
+  }
+
+  static const String _omitPasswordUpdate = '__omit_password_update__';
 }
