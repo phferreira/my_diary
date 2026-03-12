@@ -1,3 +1,5 @@
+import 'package:my_diary/core/security/password_hasher.dart';
+
 class Diary {
   const Diary({
     required this.id,
@@ -20,7 +22,17 @@ class Diary {
       return true;
     }
 
-    return password == providedPassword;
+    final storedPassword = password;
+    if (storedPassword == null || storedPassword.isEmpty) {
+      return false;
+    }
+
+    final hashedProvidedPassword = PasswordHasher.hash(providedPassword);
+    if (PasswordHasher.isSha256Hash(storedPassword)) {
+      return storedPassword == hashedProvidedPassword;
+    }
+
+    return storedPassword == providedPassword.trim();
   }
 
   Diary copyWith({

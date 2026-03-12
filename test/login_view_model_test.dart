@@ -23,6 +23,34 @@ void main() {
       expect(result.status, DiaryLookupStatus.requiresPassword);
     });
 
+    test('desbloqueia diário protegido com senha correta', () async {
+      final result = await viewModel.findDiary('Trabalho');
+      final diary = result.diary;
+
+      expect(diary, isNotNull);
+
+      final unlockedDiary = await viewModel.unlockDiary(
+        diary: diary!,
+        password: '1234',
+      );
+
+      expect(unlockedDiary, isNotNull);
+    });
+
+    test('não desbloqueia diário protegido com senha incorreta', () async {
+      final result = await viewModel.findDiary('Trabalho');
+      final diary = result.diary;
+
+      expect(diary, isNotNull);
+
+      final unlockedDiary = await viewModel.unlockDiary(
+        diary: diary!,
+        password: 'senha-invalida',
+      );
+
+      expect(unlockedDiary, isNull);
+    });
+
     test('cria diário público sem senha', () async {
       final diary = await viewModel.createDiary(
         name: 'Publico',
@@ -32,6 +60,17 @@ void main() {
 
       expect(diary.isPublic, isTrue);
       expect(diary.password, isNull);
+    });
+
+    test('cria diário privado salvando senha criptografada', () async {
+      final diary = await viewModel.createDiary(
+        name: 'Privado',
+        password: 'minhaSenha',
+        isPublic: false,
+      );
+
+      expect(diary.password, isNot('minhaSenha'));
+      expect(diary.matchesPassword('minhaSenha'), isTrue);
     });
   });
 }

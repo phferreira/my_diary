@@ -1,5 +1,6 @@
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
+import 'package:my_diary/core/security/password_hasher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseDiaryRepository implements DiaryRepository {
@@ -31,12 +32,17 @@ class SupabaseDiaryRepository implements DiaryRepository {
     required String? password,
     required bool isPublic,
   }) async {
+    final hashedPassword = _buildHashedPassword(
+      password: password,
+      isPublic: isPublic,
+    );
+
     final response = await _client
         .from(_tableName)
         .insert(<String, dynamic>{
           'name': name,
           'content': '',
-          'password': isPublic ? null : password,
+          'password': hashedPassword,
           'is_public': isPublic,
         })
         .select('id, name, content, password, is_public')
@@ -64,5 +70,16 @@ class SupabaseDiaryRepository implements DiaryRepository {
       password: json['password'] as String?,
       isPublic: (json['is_public'] as bool?) ?? false,
     );
+  }
+
+  String? _buildHashedPassword({
+    required String? password,
+    required bool isPublic,
+  }) {
+    if (isPublic || password == null || password.trim().isEmpty) {
+      return null;
+    }
+
+    return PasswordHasher.hash(password);
   }
 }
