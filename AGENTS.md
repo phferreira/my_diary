@@ -54,3 +54,4 @@ If any command cannot be run due to environment limitations, document it in the 
 - Use **Conventional Commits** as the default for all commit messages.
 - Follow the format: `type(scope): short description`.
 - Prefer clear types such as `feat`, `fix`, `docs`, `refactor`, `test`, and `chore`.
+- Prefer atomic/unitary commits per specific change to keep diffs clear and focused.
