@@ -215,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                   ? ''
                   : '${AppStrings.appVersionPrefix}$_appVersion',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 6),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 8),
             ),
           ),
         ],
