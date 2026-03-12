@@ -1,12 +1,13 @@
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
+import 'package:my_diary/core/security/password_hasher.dart';
 
 class InMemoryDiaryRepository implements DiaryRepository {
   InMemoryDiaryRepository({List<Diary>? seedDiaries})
       : _diaries = List<Diary>.from(
           seedDiaries ??
-              const <Diary>[
-                Diary(
+              <Diary>[
+                const Diary(
                   id: '1',
                   name: 'Viagem 2026',
                   content: 'Planejar roteiro da viagem pela Europa.',
@@ -16,13 +17,13 @@ class InMemoryDiaryRepository implements DiaryRepository {
                   id: '2',
                   name: 'Trabalho',
                   content: 'Resumo da semana e próximos objetivos.',
-                  password: '1234',
+                  password: PasswordHasher.hash('1234'),
                 ),
                 Diary(
                   id: '3',
                   name: 'Diario Pessoal',
                   content: 'Reflexões diárias.',
-                  password: 'segredo',
+                  password: PasswordHasher.hash('segredo'),
                 ),
               ],
         );
@@ -46,11 +47,16 @@ class InMemoryDiaryRepository implements DiaryRepository {
     required String? password,
     required bool isPublic,
   }) async {
+    final hashedPassword = _buildHashedPassword(
+      password: password,
+      isPublic: isPublic,
+    );
+
     final diary = Diary(
       id: (_diaries.length + 1).toString(),
       name: name,
       content: '',
-      password: isPublic ? null : password,
+      password: hashedPassword,
       isPublic: isPublic,
     );
     _diaries.add(diary);
@@ -68,5 +74,16 @@ class InMemoryDiaryRepository implements DiaryRepository {
     }
 
     _diaries[index] = _diaries[index].copyWith(content: content);
+  }
+
+  String? _buildHashedPassword({
+    required String? password,
+    required bool isPublic,
+  }) {
+    if (isPublic || password == null || password.trim().isEmpty) {
+      return null;
+    }
+
+    return PasswordHasher.hash(password);
   }
 }
