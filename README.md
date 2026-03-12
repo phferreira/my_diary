@@ -37,10 +37,12 @@ Os dados sensíveis são lidos de variáveis de ambiente em tempo de build usand
 ### Executar localmente
 
 ```bash
-flutter run -d chrome \
+fvm flutter run -d chrome \
   --dart-define=SUPABASE_URL=https://SEU-PROJETO.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=SUA_CHAVE_ANON
 ```
+
+Se você não usa `fvm`, substitua o comando acima por `flutter run -d chrome`.
 
 Quando as variáveis não são informadas, o app usa `InMemoryDiaryRepository` como fallback para facilitar desenvolvimento local.
 
