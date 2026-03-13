@@ -26,8 +26,7 @@ class AppStrings {
   static const String passwordMinLength =
       'A senha deve ter ao menos 4 caracteres';
   static const String diaryEditorContentLabel = 'Conteúdo do diário';
-  static const String diaryEditorContentHint =
-      'Escreva aqui... limite de 4000 caracteres';
+  static const String diaryEditorContentHint = 'Escreva aqui...';
   static const String diaryPublicLabel = 'Diário público';
   static const String diaryPublicDescription =
       'Qualquer pessoa pode acessar sem senha.';
