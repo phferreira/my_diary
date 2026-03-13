@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:my_diary/core/config/app_environment.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
@@ -65,6 +66,8 @@ class MyDiaryApp extends StatelessWidget {
     return MaterialApp(
       title: AppStrings.appName,
       theme: AppTheme.light,
+      localizationsDelegates: FlutterQuillLocalizations.localizationsDelegates,
+      supportedLocales: FlutterQuillLocalizations.supportedLocales,
       home: LoginPage(
         viewModel: loginViewModel,
         saveDiaryContentUseCase: saveDiaryContentUseCase,
