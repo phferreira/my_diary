@@ -27,18 +27,14 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   late final TextEditingController _contentController;
 
   TextAlign _textAlign = TextAlign.left;
-  bool _isBold = false;
-  bool _isItalic = false;
   bool _isPublic = false;
   bool _isUpdatingAccess = false;
 
   @override
   void initState() {
     super.initState();
-    final initialState = _parseStoredMarkdown(widget.diary.content);
+    final initialState = _parseStoredContent(widget.diary.content);
     _textAlign = initialState.textAlign;
-    _isBold = initialState.isBold;
-    _isItalic = initialState.isItalic;
     _contentController = TextEditingController(text: initialState.content);
     _isPublic = widget.diary.isPublic;
   }
@@ -67,32 +63,19 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   String _buildMarkdownContent() {
-    var content = _contentController.text;
-    if (content.trim().isEmpty) {
+    final content = _contentController.text;
+    final alignTag = _markdownAlignTag(_textAlign);
+
+    if (content.trim().isEmpty || alignTag == null) {
       return content;
     }
 
-    if (_isBold) {
-      content = '**$content**';
-    }
-
-    if (_isItalic) {
-      content = '*$content*';
-    }
-
-    final alignTag = _markdownAlignTag(_textAlign);
-    if (alignTag != null) {
-      content = '<div align="$alignTag">\n\n$content\n\n</div>';
-    }
-
-    return content;
+    return '<div align="$alignTag">\n\n$content\n\n</div>';
   }
 
-  _EditorInitialState _parseStoredMarkdown(String content) {
+  _EditorInitialState _parseStoredContent(String content) {
     var parsedContent = content.trim();
     var textAlign = TextAlign.left;
-    var isBold = false;
-    var isItalic = false;
 
     final alignMatch = RegExp(
       r'^<div align="(left|center|right)">\s*([\s\S]*?)\s*</div>$',
@@ -104,32 +87,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       parsedContent = (alignMatch.group(2) ?? '').trim();
     }
 
-    if (_isWrappedBy(parsedContent, '**')) {
-      isBold = true;
-      parsedContent = _unwrapMarker(parsedContent, '**');
-    }
-
-    if (_isWrappedBy(parsedContent, '*')) {
-      isItalic = true;
-      parsedContent = _unwrapMarker(parsedContent, '*');
-    }
-
-    return _EditorInitialState(
-      content: parsedContent,
-      textAlign: textAlign,
-      isBold: isBold,
-      isItalic: isItalic,
-    );
-  }
-
-  bool _isWrappedBy(String content, String marker) {
-    return content.startsWith(marker) &&
-        content.endsWith(marker) &&
-        content.length > marker.length * 2;
-  }
-
-  String _unwrapMarker(String content, String marker) {
-    return content.substring(marker.length, content.length - marker.length);
+    return _EditorInitialState(content: parsedContent, textAlign: textAlign);
   }
 
   String? _markdownAlignTag(TextAlign align) {
@@ -147,6 +105,73 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       'right' => TextAlign.right,
       _ => TextAlign.left,
     };
+  }
+
+  void _applyMarkdownMarker(String marker) {
+    final text = _contentController.text;
+    final selection = _contentController.selection;
+
+    if (!selection.isValid || text.isEmpty) {
+      return;
+    }
+
+    final targetSelection = selection.isCollapsed
+        ? _expandToCurrentWord(text, selection.start)
+        : selection;
+
+    if (!targetSelection.isValid ||
+        targetSelection.start == targetSelection.end) {
+      return;
+    }
+
+    final selectedText =
+        text.substring(targetSelection.start, targetSelection.end);
+
+    final wrappedText = _isWrappedBy(selectedText, marker)
+        ? selectedText.substring(marker.length, selectedText.length - marker.length)
+        : '$marker$selectedText$marker';
+
+    final updatedText = text.replaceRange(
+      targetSelection.start,
+      targetSelection.end,
+      wrappedText,
+    );
+
+    _contentController.value = TextEditingValue(
+      text: updatedText,
+      selection: TextSelection.collapsed(
+        offset: targetSelection.start + wrappedText.length,
+      ),
+    );
+  }
+
+  bool _isWrappedBy(String content, String marker) {
+    return content.startsWith(marker) &&
+        content.endsWith(marker) &&
+        content.length > marker.length * 2;
+  }
+
+  TextSelection _expandToCurrentWord(String text, int cursorPosition) {
+    if (cursorPosition < 0 || cursorPosition > text.length) {
+      return const TextSelection.collapsed(offset: -1);
+    }
+
+    var start = cursorPosition;
+    var end = cursorPosition;
+
+    while (start > 0 && !_isWordBoundary(text[start - 1])) {
+      start--;
+    }
+
+    while (end < text.length && !_isWordBoundary(text[end])) {
+      end++;
+    }
+
+    return TextSelection(baseOffset: start, extentOffset: end);
+  }
+
+  bool _isWordBoundary(String char) {
+    return RegExp(r'\s').hasMatch(char);
   }
 
   Future<void> _updateVisibility(bool isPublic) async {
@@ -356,23 +381,13 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                   children: <Widget>[
                     IconButton(
                       tooltip: AppStrings.markdownBoldTooltip,
-                      onPressed: () => setState(() => _isBold = !_isBold),
-                      icon: Icon(
-                        Icons.format_bold,
-                        color: _isBold
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
+                      onPressed: () => _applyMarkdownMarker('**'),
+                      icon: const Icon(Icons.format_bold),
                     ),
                     IconButton(
                       tooltip: AppStrings.markdownItalicTooltip,
-                      onPressed: () => setState(() => _isItalic = !_isItalic),
-                      icon: Icon(
-                        Icons.format_italic,
-                        color: _isItalic
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
+                      onPressed: () => _applyMarkdownMarker('*'),
+                      icon: const Icon(Icons.format_italic),
                     ),
                     IconButton(
                       tooltip: AppStrings.alignLeftTooltip,
@@ -421,8 +436,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                     style: TextStyle(
                       fontSize: isCompact ? 14 : 16,
                       height: 1.4,
-                      fontWeight: _isBold ? FontWeight.w700 : FontWeight.w400,
-                      fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
                     ),
                     inputFormatters: <TextInputFormatter>[
                       LengthLimitingTextInputFormatter(4000),
@@ -456,15 +469,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 }
 
 class _EditorInitialState {
-  const _EditorInitialState({
-    required this.content,
-    required this.textAlign,
-    required this.isBold,
-    required this.isItalic,
-  });
+  const _EditorInitialState({required this.content, required this.textAlign});
 
   final String content;
   final TextAlign textAlign;
-  final bool isBold;
-  final bool isItalic;
 }
