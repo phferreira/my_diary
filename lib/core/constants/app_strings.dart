@@ -49,5 +49,4 @@ class AppStrings {
   static const String alignLeftTooltip = 'Alinhar à esquerda';
   static const String alignCenterTooltip = 'Centralizar';
   static const String alignRightTooltip = 'Alinhar à direita';
-  static const String markdownPreviewLabel = 'Pré-visualização (.md)';
 }

@@ -27,26 +27,24 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   late final TextEditingController _contentController;
 
   TextAlign _textAlign = TextAlign.left;
+  bool _isBold = false;
+  bool _isItalic = false;
   bool _isPublic = false;
   bool _isUpdatingAccess = false;
 
   @override
   void initState() {
     super.initState();
-    _contentController = TextEditingController(text: widget.diary.content);
-    _contentController.addListener(_onContentChanged);
+    final initialState = _parseStoredMarkdown(widget.diary.content);
+    _textAlign = initialState.textAlign;
+    _isBold = initialState.isBold;
+    _isItalic = initialState.isItalic;
+    _contentController = TextEditingController(text: initialState.content);
     _isPublic = widget.diary.isPublic;
-  }
-
-  void _onContentChanged() {
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   @override
   void dispose() {
-    _contentController.removeListener(_onContentChanged);
     _contentController.dispose();
     super.dispose();
   }
@@ -69,14 +67,69 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   String _buildMarkdownContent() {
-    final content = _contentController.text;
-    final alignTag = _markdownAlignTag(_textAlign);
-
-    if (alignTag == null || content.trim().isEmpty) {
+    var content = _contentController.text;
+    if (content.trim().isEmpty) {
       return content;
     }
 
-    return '<div align="$alignTag">\n\n$content\n\n</div>';
+    if (_isBold) {
+      content = '**$content**';
+    }
+
+    if (_isItalic) {
+      content = '*$content*';
+    }
+
+    final alignTag = _markdownAlignTag(_textAlign);
+    if (alignTag != null) {
+      content = '<div align="$alignTag">\n\n$content\n\n</div>';
+    }
+
+    return content;
+  }
+
+  _EditorInitialState _parseStoredMarkdown(String content) {
+    var parsedContent = content.trim();
+    var textAlign = TextAlign.left;
+    var isBold = false;
+    var isItalic = false;
+
+    final alignMatch = RegExp(
+      r'^<div align="(left|center|right)">\s*([\s\S]*?)\s*</div>$',
+      caseSensitive: false,
+    ).firstMatch(parsedContent);
+
+    if (alignMatch != null) {
+      textAlign = _textAlignFromTag((alignMatch.group(1) ?? 'left'));
+      parsedContent = (alignMatch.group(2) ?? '').trim();
+    }
+
+    if (_isWrappedBy(parsedContent, '**')) {
+      isBold = true;
+      parsedContent = _unwrapMarker(parsedContent, '**');
+    }
+
+    if (_isWrappedBy(parsedContent, '*')) {
+      isItalic = true;
+      parsedContent = _unwrapMarker(parsedContent, '*');
+    }
+
+    return _EditorInitialState(
+      content: parsedContent,
+      textAlign: textAlign,
+      isBold: isBold,
+      isItalic: isItalic,
+    );
+  }
+
+  bool _isWrappedBy(String content, String marker) {
+    return content.startsWith(marker) &&
+        content.endsWith(marker) &&
+        content.length > marker.length * 2;
+  }
+
+  String _unwrapMarker(String content, String marker) {
+    return content.substring(marker.length, content.length - marker.length);
   }
 
   String? _markdownAlignTag(TextAlign align) {
@@ -85,6 +138,14 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       TextAlign.center => 'center',
       TextAlign.right || TextAlign.end => 'right',
       _ => null,
+    };
+  }
+
+  TextAlign _textAlignFromTag(String alignTag) {
+    return switch (alignTag.toLowerCase()) {
+      'center' => TextAlign.center,
+      'right' => TextAlign.right,
+      _ => TextAlign.left,
     };
   }
 
@@ -230,13 +291,15 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
                     if (password.length < 4) {
                       setState(
-                          () => errorMessage = AppStrings.passwordMinLength);
+                        () => errorMessage = AppStrings.passwordMinLength,
+                      );
                       return;
                     }
 
                     if (password != confirmation) {
                       setState(
-                          () => errorMessage = AppStrings.passwordsDontMatch);
+                        () => errorMessage = AppStrings.passwordsDontMatch,
+                      );
                       return;
                     }
 
@@ -255,69 +318,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     confirmController.dispose();
 
     return result;
-  }
-
-  void _applyMarkdownMarker(String marker) {
-    final text = _contentController.text;
-    final selection = _contentController.selection;
-
-    if (!selection.isValid || text.isEmpty) {
-      return;
-    }
-
-    final targetSelection = selection.isCollapsed
-        ? _expandToCurrentWord(text, selection.start)
-        : selection;
-
-    if (!targetSelection.isValid ||
-        targetSelection.start == targetSelection.end) {
-      return;
-    }
-
-    final selectedText =
-        text.substring(targetSelection.start, targetSelection.end);
-    final wrappedText = selectedText.startsWith(marker) &&
-            selectedText.endsWith(marker) &&
-            selectedText.length > marker.length * 2
-        ? selectedText.substring(
-            marker.length, selectedText.length - marker.length)
-        : '$marker$selectedText$marker';
-
-    final updatedText = text.replaceRange(
-      targetSelection.start,
-      targetSelection.end,
-      wrappedText,
-    );
-
-    _contentController.value = TextEditingValue(
-      text: updatedText,
-      selection: TextSelection.collapsed(
-        offset: targetSelection.start + wrappedText.length,
-      ),
-    );
-  }
-
-  TextSelection _expandToCurrentWord(String text, int cursorPosition) {
-    if (cursorPosition < 0 || cursorPosition > text.length) {
-      return const TextSelection.collapsed(offset: -1);
-    }
-
-    var start = cursorPosition;
-    var end = cursorPosition;
-
-    while (start > 0 && !_isWordBoundary(text[start - 1])) {
-      start--;
-    }
-
-    while (end < text.length && !_isWordBoundary(text[end])) {
-      end++;
-    }
-
-    return TextSelection(baseOffset: start, extentOffset: end);
-  }
-
-  bool _isWordBoundary(String char) {
-    return RegExp(r'\s').hasMatch(char);
   }
 
   @override
@@ -356,13 +356,23 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                   children: <Widget>[
                     IconButton(
                       tooltip: AppStrings.markdownBoldTooltip,
-                      onPressed: () => _applyMarkdownMarker('**'),
-                      icon: const Icon(Icons.format_bold),
+                      onPressed: () => setState(() => _isBold = !_isBold),
+                      icon: Icon(
+                        Icons.format_bold,
+                        color: _isBold
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
                     ),
                     IconButton(
                       tooltip: AppStrings.markdownItalicTooltip,
-                      onPressed: () => _applyMarkdownMarker('*'),
-                      icon: const Icon(Icons.format_italic),
+                      onPressed: () => setState(() => _isItalic = !_isItalic),
+                      icon: Icon(
+                        Icons.format_italic,
+                        color: _isItalic
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
                     ),
                     IconButton(
                       tooltip: AppStrings.alignLeftTooltip,
@@ -411,6 +421,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                     style: TextStyle(
                       fontSize: isCompact ? 14 : 16,
                       height: 1.4,
+                      fontWeight: _isBold ? FontWeight.w700 : FontWeight.w400,
+                      fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
                     ),
                     inputFormatters: <TextInputFormatter>[
                       LengthLimitingTextInputFormatter(4000),
@@ -420,30 +432,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                       labelText: AppStrings.diaryEditorContentLabel,
                       hintText: AppStrings.diaryEditorContentHint,
                       alignLabelWithHint: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  AppStrings.markdownPreviewLabel,
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  constraints: const BoxConstraints(minHeight: 56),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _contentController.text,
-                    textAlign: _textAlign,
-                    style: TextStyle(
-                      fontSize: isCompact ? 14 : 16,
-                      height: 1.4,
                     ),
                   ),
                 ),
@@ -465,4 +453,18 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       ),
     );
   }
+}
+
+class _EditorInitialState {
+  const _EditorInitialState({
+    required this.content,
+    required this.textAlign,
+    required this.isBold,
+    required this.isItalic,
+  });
+
+  final String content;
+  final TextAlign textAlign;
+  final bool isBold;
+  final bool isItalic;
 }
