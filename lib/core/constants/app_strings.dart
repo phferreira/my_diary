@@ -44,4 +44,10 @@ class AppStrings {
   static const String hidePassword = 'Ocultar senha';
   static const String save = 'Salvar';
   static const String contentSaved = 'Conteúdo salvo com sucesso';
+  static const String markdownBoldTooltip = 'Negrito (.md)';
+  static const String markdownItalicTooltip = 'Itálico (.md)';
+  static const String alignLeftTooltip = 'Alinhar à esquerda';
+  static const String alignCenterTooltip = 'Centralizar';
+  static const String alignRightTooltip = 'Alinhar à direita';
+  static const String markdownPreviewLabel = 'Pré-visualização (.md)';
 }

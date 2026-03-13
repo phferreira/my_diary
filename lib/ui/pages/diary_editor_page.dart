@@ -34,19 +34,29 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   void initState() {
     super.initState();
     _contentController = TextEditingController(text: widget.diary.content);
+    _contentController.addListener(_onContentChanged);
     _isPublic = widget.diary.isPublic;
+  }
+
+  void _onContentChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _contentController.removeListener(_onContentChanged);
     _contentController.dispose();
     super.dispose();
   }
 
   Future<void> _saveContent() async {
+    final markdownContent = _buildMarkdownContent();
+
     await widget.saveDiaryContentUseCase(
       diaryId: widget.diary.id,
-      content: _contentController.text,
+      content: markdownContent,
     );
 
     if (!mounted) {
@@ -56,6 +66,26 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(AppStrings.contentSaved)),
     );
+  }
+
+  String _buildMarkdownContent() {
+    final content = _contentController.text;
+    final alignTag = _markdownAlignTag(_textAlign);
+
+    if (alignTag == null || content.trim().isEmpty) {
+      return content;
+    }
+
+    return '<div align="$alignTag">\n\n$content\n\n</div>';
+  }
+
+  String? _markdownAlignTag(TextAlign align) {
+    return switch (align) {
+      TextAlign.left || TextAlign.start => 'left',
+      TextAlign.center => 'center',
+      TextAlign.right || TextAlign.end => 'right',
+      _ => null,
+    };
   }
 
   Future<void> _updateVisibility(bool isPublic) async {
@@ -325,17 +355,17 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                   runSpacing: 8,
                   children: <Widget>[
                     IconButton(
-                      tooltip: 'Negrito (.md)',
+                      tooltip: AppStrings.markdownBoldTooltip,
                       onPressed: () => _applyMarkdownMarker('**'),
                       icon: const Icon(Icons.format_bold),
                     ),
                     IconButton(
-                      tooltip: 'Itálico (.md)',
+                      tooltip: AppStrings.markdownItalicTooltip,
                       onPressed: () => _applyMarkdownMarker('*'),
                       icon: const Icon(Icons.format_italic),
                     ),
                     IconButton(
-                      tooltip: 'Alinhar à esquerda',
+                      tooltip: AppStrings.alignLeftTooltip,
                       onPressed: () =>
                           setState(() => _textAlign = TextAlign.left),
                       icon: Icon(
@@ -346,7 +376,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Centralizar',
+                      tooltip: AppStrings.alignCenterTooltip,
                       onPressed: () =>
                           setState(() => _textAlign = TextAlign.center),
                       icon: Icon(
@@ -357,7 +387,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Alinhar à direita',
+                      tooltip: AppStrings.alignRightTooltip,
                       onPressed: () =>
                           setState(() => _textAlign = TextAlign.right),
                       icon: Icon(
@@ -390,6 +420,30 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                       labelText: AppStrings.diaryEditorContentLabel,
                       hintText: AppStrings.diaryEditorContentHint,
                       alignLabelWithHint: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  AppStrings.markdownPreviewLabel,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  constraints: const BoxConstraints(minHeight: 56),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _contentController.text,
+                    textAlign: _textAlign,
+                    style: TextStyle(
+                      fontSize: isCompact ? 14 : 16,
+                      height: 1.4,
                     ),
                   ),
                 ),
