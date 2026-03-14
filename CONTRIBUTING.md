@@ -4,6 +4,8 @@ This project follows a strict workflow to keep the history readable and code
 quality high. Follow the rules below for **every** change.
 
 ## Required workflow
+1. If there are local changes, **stash them and clean the working tree** before
+   starting a new feature branch.
 1. Create a branch **from `develop`**.
 1. Use **TDD as the priority**:
    - Write/update tests **before** implementation.
