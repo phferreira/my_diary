@@ -43,4 +43,8 @@ class AppStrings {
   static const String hidePassword = 'Ocultar senha';
   static const String save = 'Salvar';
   static const String contentSaved = 'Conteúdo salvo com sucesso';
+  static const String previousDay = 'Dia anterior';
+  static const String nextDay = 'Próximo dia';
+  static const String previousMonth = 'Mês anterior';
+  static const String nextMonth = 'Próximo mês';
 }

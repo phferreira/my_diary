@@ -85,6 +85,36 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     setState(() => _isLoadingEntry = false);
   }
 
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    await _loadEntryForDate(picked);
+  }
+
+  Future<void> _changeDay(int delta) async {
+    final nextDate = _selectedDate.add(Duration(days: delta));
+    await _loadEntryForDate(nextDate);
+  }
+
+  Future<void> _changeMonth(int delta) async {
+    final targetMonth =
+        DateTime(_selectedDate.year, _selectedDate.month + delta, 1);
+    final lastDayOfMonth =
+        DateTime(targetMonth.year, targetMonth.month + 1, 0).day;
+    final day = _selectedDate.day.clamp(1, lastDayOfMonth);
+    final nextDate = DateTime(targetMonth.year, targetMonth.month, day);
+    await _loadEntryForDate(nextDate);
+  }
+
   static DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
@@ -299,6 +329,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 700;
+    final localizations = MaterialLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -313,6 +344,40 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    IconButton(
+                      tooltip: AppStrings.previousMonth,
+                      onPressed:
+                          _isLoadingEntry ? null : () => _changeMonth(-1),
+                      icon: const Icon(Icons.keyboard_double_arrow_left),
+                    ),
+                    IconButton(
+                      tooltip: AppStrings.previousDay,
+                      onPressed: _isLoadingEntry ? null : () => _changeDay(-1),
+                      icon: const Icon(Icons.chevron_left),
+                    ),
+                    TextButton(
+                      onPressed: _isLoadingEntry ? null : _selectDate,
+                      child: Text(
+                        localizations.formatFullDate(_selectedDate),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: AppStrings.nextDay,
+                      onPressed: _isLoadingEntry ? null : () => _changeDay(1),
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                    IconButton(
+                      tooltip: AppStrings.nextMonth,
+                      onPressed: _isLoadingEntry ? null : () => _changeMonth(1),
+                      icon: const Icon(Icons.keyboard_double_arrow_right),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
