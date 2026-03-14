@@ -23,7 +23,8 @@ class AppStrings {
   static const String confirmPasswordLabel = 'Confirme a senha';
   static const String openDiary = 'Abrir diário';
   static const String passwordsDontMatch = 'As senhas não conferem';
-  static const String passwordMinLength = 'A senha deve ter ao menos 4 caracteres';
+  static const String passwordMinLength =
+      'A senha deve ter ao menos 4 caracteres';
   static const String diaryEditorContentLabel = 'Conteúdo do diário';
   static const String diaryEditorContentHint =
       'Escreva aqui... limite de 4000 caracteres';

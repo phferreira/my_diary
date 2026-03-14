@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
 import 'package:my_diary/ui/pages/diary_editor_page.dart';
@@ -12,13 +13,15 @@ import 'package:my_diary/ui/widgets/diary_search_field.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({
     required this.viewModel,
-    required this.saveDiaryContentUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     this.appVersion,
     super.key,
   });
 
   final LoginViewModel viewModel;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final String? appVersion;
 
   @override
@@ -38,7 +41,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loadVersion() async {
-    if (widget.appVersion case final providedVersion? when providedVersion.isNotEmpty) {
+    if (widget.appVersion case final providedVersion?
+        when providedVersion.isNotEmpty) {
       setState(() => _appVersion = providedVersion);
       return;
     }
@@ -88,7 +92,8 @@ class _LoginPageState extends State<LoginPage> {
       MaterialPageRoute<void>(
         builder: (_) => DiaryEditorPage(
           diary: diary,
-          saveDiaryContentUseCase: widget.saveDiaryContentUseCase,
+          loadDiaryEntryUseCase: widget.loadDiaryEntryUseCase,
+          saveDiaryEntryUseCase: widget.saveDiaryEntryUseCase,
         ),
       ),
     );
@@ -215,7 +220,8 @@ class _LoginPageState extends State<LoginPage> {
                   ? ''
                   : '${AppStrings.appVersionPrefix}$_appVersion',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 8),
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 8),
             ),
           ),
         ],
@@ -242,7 +248,8 @@ class _CreateDiaryDialog extends StatefulWidget {
 
 class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _isPublic = false;
   String? _error;
@@ -273,7 +280,8 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
       password = _passwordController.text.trim();
     }
 
-    final diary = await widget.onCreate(password: password, isPublic: _isPublic);
+    final diary =
+        await widget.onCreate(password: password, isPublic: _isPublic);
     if (!mounted) {
       return;
     }

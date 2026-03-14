@@ -1,15 +1,17 @@
 import 'package:my_diary/core/entities/diary.dart';
+import 'package:my_diary/core/entities/diary_entry.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
 import 'package:my_diary/core/security/password_hasher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseDiaryRepository implements DiaryRepository {
   SupabaseDiaryRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+      : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
-  static const String _tableName = 'diaries';
+  static const String _tableName = 'tb_diaries';
+  static const String _entriesTableName = 'tb_diary_entries';
 
   @override
   Future<Diary?> findByName(String query) async {
@@ -52,14 +54,42 @@ class SupabaseDiaryRepository implements DiaryRepository {
   }
 
   @override
-  Future<void> updateDiaryContent({
-    required String id,
+  Future<DiaryEntry?> findEntryByDate({
+    required String diaryId,
+    required DateTime date,
+  }) async {
+    final response = await _client
+        .from(_entriesTableName)
+        .select('diary_id, entry_date, content')
+        .eq('diary_id', diaryId)
+        .eq('entry_date', _formatDate(date))
+        .maybeSingle();
+
+    if (response == null) {
+      return null;
+    }
+
+    return DiaryEntry(
+      diaryId: response['diary_id'].toString(),
+      date: _parseDate(response['entry_date']),
+      content: (response['content'] as String?) ?? '',
+    );
+  }
+
+  @override
+  Future<void> upsertDiaryEntry({
+    required String diaryId,
+    required DateTime date,
     required String content,
   }) {
-    return _client
-        .from(_tableName)
-        .update(<String, dynamic>{'content': content})
-        .eq('id', id);
+    return _client.from(_entriesTableName).upsert(
+      <String, dynamic>{
+        'diary_id': diaryId,
+        'entry_date': _formatDate(date),
+        'content': content,
+      },
+      onConflict: 'diary_id,entry_date',
+    );
   }
 
   Diary _toDiary(Map<String, dynamic> json) {
@@ -81,5 +111,26 @@ class SupabaseDiaryRepository implements DiaryRepository {
     }
 
     return PasswordHasher.hash(password);
+  }
+
+  DateTime _parseDate(Object? value) {
+    if (value is DateTime) {
+      return DateTime(value.year, value.month, value.day);
+    }
+
+    if (value is String) {
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) {
+        return DateTime(parsed.year, parsed.month, parsed.day);
+      }
+    }
+
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  String _formatDate(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return normalized.toIso8601String().split('T').first;
   }
 }

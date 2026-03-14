@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
 
 class DiaryEditorPage extends StatefulWidget {
   const DiaryEditorPage({
     required this.diary,
-    required this.saveDiaryContentUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     super.key,
   });
 
   final Diary diary;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
 
   @override
   State<DiaryEditorPage> createState() => _DiaryEditorPageState();
@@ -24,11 +27,14 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   late final TextEditingController _contentController;
 
   TextAlign _textAlign = TextAlign.left;
+  DateTime _selectedDate = _normalizeDate(DateTime.now());
+  bool _isLoadingEntry = false;
 
   @override
   void initState() {
     super.initState();
-    _contentController = TextEditingController(text: widget.diary.content);
+    _contentController = TextEditingController();
+    _loadEntryForDate(_selectedDate);
   }
 
   @override
@@ -38,8 +44,9 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   Future<void> _saveContent() async {
-    await widget.saveDiaryContentUseCase(
+    await widget.saveDiaryEntryUseCase(
       diaryId: widget.diary.id,
+      date: _selectedDate,
       content: _contentController.text,
     );
 
@@ -50,6 +57,30 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(AppStrings.contentSaved)),
     );
+  }
+
+  Future<void> _loadEntryForDate(DateTime date) async {
+    final normalizedDate = _normalizeDate(date);
+    setState(() {
+      _isLoadingEntry = true;
+      _selectedDate = normalizedDate;
+    });
+
+    final entry = await widget.loadDiaryEntryUseCase(
+      diaryId: widget.diary.id,
+      date: normalizedDate,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _contentController.text = entry?.content ?? '';
+    setState(() => _isLoadingEntry = false);
+  }
+
+  static DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 
   void _applyMarkdownMarker(String marker) {
@@ -64,15 +95,18 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
         ? _expandToCurrentWord(text, selection.start)
         : selection;
 
-    if (!targetSelection.isValid || targetSelection.start == targetSelection.end) {
+    if (!targetSelection.isValid ||
+        targetSelection.start == targetSelection.end) {
       return;
     }
 
-    final selectedText = text.substring(targetSelection.start, targetSelection.end);
+    final selectedText =
+        text.substring(targetSelection.start, targetSelection.end);
     final wrappedText = selectedText.startsWith(marker) &&
             selectedText.endsWith(marker) &&
             selectedText.length > marker.length * 2
-        ? selectedText.substring(marker.length, selectedText.length - marker.length)
+        ? selectedText.substring(
+            marker.length, selectedText.length - marker.length)
         : '$marker$selectedText$marker';
 
     final updatedText = text.replaceRange(
@@ -146,7 +180,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                     ),
                     IconButton(
                       tooltip: 'Alinhar à esquerda',
-                      onPressed: () => setState(() => _textAlign = TextAlign.left),
+                      onPressed: () =>
+                          setState(() => _textAlign = TextAlign.left),
                       icon: Icon(
                         Icons.format_align_left,
                         color: _textAlign == TextAlign.left
@@ -156,7 +191,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                     ),
                     IconButton(
                       tooltip: 'Centralizar',
-                      onPressed: () => setState(() => _textAlign = TextAlign.center),
+                      onPressed: () =>
+                          setState(() => _textAlign = TextAlign.center),
                       icon: Icon(
                         Icons.format_align_center,
                         color: _textAlign == TextAlign.center
@@ -166,7 +202,8 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                     ),
                     IconButton(
                       tooltip: 'Alinhar à direita',
-                      onPressed: () => setState(() => _textAlign = TextAlign.right),
+                      onPressed: () =>
+                          setState(() => _textAlign = TextAlign.right),
                       icon: Icon(
                         Icons.format_align_right,
                         color: _textAlign == TextAlign.right
@@ -180,6 +217,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                 Expanded(
                   child: TextField(
                     controller: _contentController,
+                    enabled: !_isLoadingEntry,
                     expands: true,
                     maxLines: null,
                     minLines: null,

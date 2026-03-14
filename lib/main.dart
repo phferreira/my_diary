@@ -4,7 +4,8 @@ import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
 import 'package:my_diary/data/repositories/supabase_diary_repository.dart';
 import 'package:my_diary/ui/design_system/theme/app_theme.dart';
@@ -18,13 +19,15 @@ Future<void> main() async {
   final repository = await _buildRepository();
   final findDiaryUseCase = FindDiaryUseCase(repository);
   final createDiaryUseCase = CreateDiaryUseCase(repository);
-  final saveDiaryContentUseCase = SaveDiaryContentUseCase(repository);
+  final loadDiaryEntryUseCase = LoadDiaryEntryUseCase(repository);
+  final saveDiaryEntryUseCase = SaveDiaryEntryUseCase(repository);
   final loginViewModel = LoginViewModel(findDiaryUseCase, createDiaryUseCase);
 
   runApp(
     MyDiaryApp(
       loginViewModel: loginViewModel,
-      saveDiaryContentUseCase: saveDiaryContentUseCase,
+      loadDiaryEntryUseCase: loadDiaryEntryUseCase,
+      saveDiaryEntryUseCase: saveDiaryEntryUseCase,
     ),
   );
 }
@@ -48,12 +51,14 @@ Future<DiaryRepository> _buildRepository() async {
 class MyDiaryApp extends StatelessWidget {
   const MyDiaryApp({
     required this.loginViewModel,
-    required this.saveDiaryContentUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     super.key,
   });
 
   final LoginViewModel loginViewModel;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +67,8 @@ class MyDiaryApp extends StatelessWidget {
       theme: AppTheme.light,
       home: LoginPage(
         viewModel: loginViewModel,
-        saveDiaryContentUseCase: saveDiaryContentUseCase,
+        loadDiaryEntryUseCase: loadDiaryEntryUseCase,
+        saveDiaryEntryUseCase: saveDiaryEntryUseCase,
       ),
     );
   }
