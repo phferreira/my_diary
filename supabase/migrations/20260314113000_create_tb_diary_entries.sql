@@ -1,5 +1,11 @@
--- Rename existing diaries table to follow tb_ naming convention.
-alter table if exists diaries rename to tb_diaries;
+-- Create main diaries table if it does not exist.
+create table if not exists tb_diaries (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  content text not null default '',
+  password text,
+  is_public boolean not null default false
+);
 
 -- Create entries table linked to diaries by date.
 create table if not exists tb_diary_entries (
