@@ -73,6 +73,31 @@ void main() {
     expect(find.text('Este diário é protegido por senha'), findsOneWidget);
   });
 
+  testWidgets('submete ao pressionar enter no campo de diário', (
+    WidgetTester tester,
+  ) async {
+    final deps = buildDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LoginPage(
+          viewModel: deps.viewModel,
+          saveDiaryContentUseCase: deps.saveUseCase,
+          updateDiaryAccessUseCase: deps.updateAccessUseCase,
+          appVersion: '1.0.0+1',
+        ),
+      ),
+    );
+
+    final field = find.byType(TextFormField);
+    await tester.tap(field);
+    await tester.enterText(field, 'Trabalho');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Este diário é protegido por senha'), findsOneWidget);
+  });
+
   testWidgets('oferece criação quando diário não é encontrado', (
     WidgetTester tester,
   ) async {

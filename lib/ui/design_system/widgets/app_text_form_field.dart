@@ -9,6 +9,8 @@ class AppTextFormField extends StatelessWidget {
     this.maxLength,
     this.inputFormatters,
     this.validator,
+    this.textInputAction,
+    this.onFieldSubmitted,
     super.key,
   });
 
@@ -18,6 +20,8 @@ class AppTextFormField extends StatelessWidget {
   final int? maxLength;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +30,8 @@ class AppTextFormField extends StatelessWidget {
       maxLength: maxLength,
       inputFormatters: inputFormatters,
       validator: validator,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
