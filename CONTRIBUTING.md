@@ -13,6 +13,10 @@ quality high. Follow the rules below for **every** change.
 1. If any tests fail, **fix the implementation and review the test**, then commit.
 1. **Each adjustment must have its own commit** to keep history readable.
 1. Open PRs **targeting `develop`** (not `main`/`master`).
+1. When a **new feature** is requested, **verify the current branch**.
+   - If the work is **not related** to the feature on that branch, **ask whether
+     a new branch should be created** before proceeding. This keeps the change
+     history readable.
 
 ## Commit conventions
 - Use Conventional Commits: `type(scope): short description`.
