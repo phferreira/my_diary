@@ -323,7 +323,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                       focusNode: _editorFocusNode,
                       scrollController: _editorScrollController,
                       config: const QuillEditorConfig(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12),
                         placeholder: AppStrings.diaryEditorContentHint,
                         expands: true,
                         autoFocus: false,
