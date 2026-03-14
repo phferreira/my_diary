@@ -7,10 +7,12 @@ import 'package:my_diary/ui/design_system/widgets/app_text_form_field.dart';
 class DiarySearchField extends StatelessWidget {
   const DiarySearchField({
     required this.controller,
+    this.onSubmitted,
     super.key,
   });
 
   final TextEditingController controller;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +23,8 @@ class DiarySearchField extends StatelessWidget {
         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
       ],
       validator: DiaryQuery.validate,
+      textInputAction: TextInputAction.search,
+      onFieldSubmitted: onSubmitted,
       label: AppStrings.findDiaryLabel,
       hint: AppStrings.findDiaryHint,
     );

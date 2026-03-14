@@ -199,7 +199,10 @@ class _LoginPageState extends State<LoginPage> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-                      DiarySearchField(controller: _queryController),
+                      DiarySearchField(
+                        controller: _queryController,
+                        onSubmitted: (_) => _onFindDiary(),
+                      ),
                       const SizedBox(height: 16),
                       AppPrimaryButton(
                         onPressed: _onFindDiary,
