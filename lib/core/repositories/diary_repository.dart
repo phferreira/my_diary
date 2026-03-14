@@ -1,4 +1,5 @@
 import 'package:my_diary/core/entities/diary.dart';
+import 'package:my_diary/core/entities/diary_entry.dart';
 
 abstract class DiaryRepository {
   Future<Diary?> findByName(String query);
@@ -9,8 +10,14 @@ abstract class DiaryRepository {
     required bool isPublic,
   });
 
-  Future<void> updateDiaryContent({
-    required String id,
+  Future<DiaryEntry?> findEntryByDate({
+    required String diaryId,
+    required DateTime date,
+  });
+
+  Future<void> upsertDiaryEntry({
+    required String diaryId,
+    required DateTime date,
     required String content,
   });
 

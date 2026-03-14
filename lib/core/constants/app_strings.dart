@@ -41,6 +41,10 @@ class AppStrings {
       'Não foi possível atualizar a visibilidade.';
   static const String showPassword = 'Mostrar senha';
   static const String hidePassword = 'Ocultar senha';
+  static const String previousDay = 'Dia anterior';
+  static const String nextDay = 'Próximo dia';
+  static const String previousMonth = 'Mês anterior';
+  static const String nextMonth = 'Próximo mês';
   static const String save = 'Salvar';
   static const String contentSaved = 'Conteúdo salvo com sucesso';
 }

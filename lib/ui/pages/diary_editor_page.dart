@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
@@ -12,13 +13,15 @@ import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
 class DiaryEditorPage extends StatefulWidget {
   const DiaryEditorPage({
     required this.diary,
-    required this.saveDiaryContentUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     required this.updateDiaryAccessUseCase,
     super.key,
   });
 
   final Diary diary;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
 
   @override
@@ -32,15 +35,18 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
   bool _isPublic = false;
   bool _isUpdatingAccess = false;
+  bool _isLoadingEntry = false;
+  DateTime _selectedDate = _normalizeDate(DateTime.now());
 
   @override
   void initState() {
     super.initState();
     _contentController = QuillController(
-      document: _loadDocument(widget.diary.content),
+      document: Document(),
       selection: const TextSelection.collapsed(offset: 0),
     );
     _isPublic = widget.diary.isPublic;
+    _loadEntryForDate(_selectedDate);
   }
 
   @override
@@ -52,8 +58,9 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   Future<void> _saveContent() async {
-    await widget.saveDiaryContentUseCase(
+    await widget.saveDiaryEntryUseCase(
       diaryId: widget.diary.id,
+      date: _selectedDate,
       content: jsonEncode(_contentController.document.toDelta().toJson()),
     );
 
@@ -64,6 +71,60 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(AppStrings.contentSaved)),
     );
+  }
+
+  Future<void> _loadEntryForDate(DateTime date) async {
+    final normalizedDate = _normalizeDate(date);
+    setState(() {
+      _isLoadingEntry = true;
+      _selectedDate = normalizedDate;
+    });
+
+    final entry = await widget.loadDiaryEntryUseCase(
+      diaryId: widget.diary.id,
+      date: normalizedDate,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    _contentController.document = _loadDocument(entry?.content ?? '');
+    setState(() => _isLoadingEntry = false);
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    await _loadEntryForDate(picked);
+  }
+
+  Future<void> _changeDay(int delta) async {
+    final nextDate = _selectedDate.add(Duration(days: delta));
+    await _loadEntryForDate(nextDate);
+  }
+
+  Future<void> _changeMonth(int delta) async {
+    final targetMonth =
+        DateTime(_selectedDate.year, _selectedDate.month + delta, 1);
+    final lastDayOfMonth =
+        DateTime(targetMonth.year, targetMonth.month + 1, 0).day;
+    final day = _selectedDate.day.clamp(1, lastDayOfMonth);
+    final nextDate = DateTime(targetMonth.year, targetMonth.month, day);
+    await _loadEntryForDate(nextDate);
+  }
+
+  static DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 
   Future<void> _updateVisibility(bool isPublic) async {
@@ -269,6 +330,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 700;
+    final localizations = MaterialLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -283,6 +345,40 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    IconButton(
+                      tooltip: AppStrings.previousMonth,
+                      onPressed:
+                          _isLoadingEntry ? null : () => _changeMonth(-1),
+                      icon: const Icon(Icons.keyboard_double_arrow_left),
+                    ),
+                    IconButton(
+                      tooltip: AppStrings.previousDay,
+                      onPressed: _isLoadingEntry ? null : () => _changeDay(-1),
+                      icon: const Icon(Icons.chevron_left),
+                    ),
+                    TextButton(
+                      onPressed: _isLoadingEntry ? null : _selectDate,
+                      child: Text(
+                        localizations.formatFullDate(_selectedDate),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: AppStrings.nextDay,
+                      onPressed: _isLoadingEntry ? null : () => _changeDay(1),
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                    IconButton(
+                      tooltip: AppStrings.nextMonth,
+                      onPressed: _isLoadingEntry ? null : () => _changeMonth(1),
+                      icon: const Icon(Icons.keyboard_double_arrow_right),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,

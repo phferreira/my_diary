@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
@@ -13,14 +14,16 @@ import 'package:my_diary/ui/widgets/diary_search_field.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({
     required this.viewModel,
-    required this.saveDiaryContentUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     required this.updateDiaryAccessUseCase,
     this.appVersion,
     super.key,
   });
 
   final LoginViewModel viewModel;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
   final String? appVersion;
 
@@ -92,7 +95,8 @@ class _LoginPageState extends State<LoginPage> {
       MaterialPageRoute<void>(
         builder: (_) => DiaryEditorPage(
           diary: diary,
-          saveDiaryContentUseCase: widget.saveDiaryContentUseCase,
+          loadDiaryEntryUseCase: widget.loadDiaryEntryUseCase,
+          saveDiaryEntryUseCase: widget.saveDiaryEntryUseCase,
           updateDiaryAccessUseCase: widget.updateDiaryAccessUseCase,
         ),
       ),
