@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
-import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
 import 'package:my_diary/ui/pages/diary_editor_page.dart';
@@ -13,15 +13,15 @@ import 'package:my_diary/ui/widgets/diary_search_field.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({
     required this.viewModel,
-    required this.saveDiaryContentUseCase,
-    required this.updateDiaryAccessUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     this.appVersion,
     super.key,
   });
 
   final LoginViewModel viewModel;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
-  final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final String? appVersion;
 
   @override
@@ -92,8 +92,8 @@ class _LoginPageState extends State<LoginPage> {
       MaterialPageRoute<void>(
         builder: (_) => DiaryEditorPage(
           diary: diary,
-          saveDiaryContentUseCase: widget.saveDiaryContentUseCase,
-          updateDiaryAccessUseCase: widget.updateDiaryAccessUseCase,
+          loadDiaryEntryUseCase: widget.loadDiaryEntryUseCase,
+          saveDiaryEntryUseCase: widget.saveDiaryEntryUseCase,
         ),
       ),
     );
@@ -224,7 +224,7 @@ class _LoginPageState extends State<LoginPage> {
                   : '${AppStrings.appVersionPrefix}$_appVersion',
               textAlign: TextAlign.center,
               style:
-                  Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+                  Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 8),
             ),
           ),
         ],

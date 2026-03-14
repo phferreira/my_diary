@@ -4,22 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/usecases/save_diary_content_use_case.dart';
-import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
+import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
+import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/ui/design_system/widgets/app_primary_button.dart';
 import 'package:my_diary/ui/design_system/widgets/app_surface_card.dart';
 
 class DiaryEditorPage extends StatefulWidget {
   const DiaryEditorPage({
     required this.diary,
-    required this.saveDiaryContentUseCase,
-    required this.updateDiaryAccessUseCase,
+    required this.loadDiaryEntryUseCase,
+    required this.saveDiaryEntryUseCase,
     super.key,
   });
 
   final Diary diary;
-  final SaveDiaryContentUseCase saveDiaryContentUseCase;
-  final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
+  final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
+  final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
 
   @override
   State<DiaryEditorPage> createState() => _DiaryEditorPageState();
@@ -30,17 +30,15 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   final FocusNode _editorFocusNode = FocusNode();
   final ScrollController _editorScrollController = ScrollController();
 
-  bool _isPublic = false;
-  bool _isUpdatingAccess = false;
+  TextAlign _textAlign = TextAlign.left;
+  DateTime _selectedDate = _normalizeDate(DateTime.now());
+  bool _isLoadingEntry = false;
 
   @override
   void initState() {
     super.initState();
-    _contentController = QuillController(
-      document: _loadDocument(widget.diary.content),
-      selection: const TextSelection.collapsed(offset: 0),
-    );
-    _isPublic = widget.diary.isPublic;
+    _contentController = TextEditingController();
+    _loadEntryForDate(_selectedDate);
   }
 
   @override
@@ -52,9 +50,10 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   Future<void> _saveContent() async {
-    await widget.saveDiaryContentUseCase(
+    await widget.saveDiaryEntryUseCase(
       diaryId: widget.diary.id,
-      content: jsonEncode(_contentController.document.toDelta().toJson()),
+      date: _selectedDate,
+      content: _contentController.text,
     );
 
     if (!mounted) {
@@ -66,24 +65,55 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     );
   }
 
-  Future<void> _updateVisibility(bool isPublic) async {
-    if (_isUpdatingAccess || isPublic == _isPublic) {
+  Future<void> _loadEntryForDate(DateTime date) async {
+    final normalizedDate = _normalizeDate(date);
+    setState(() {
+      _isLoadingEntry = true;
+      _selectedDate = normalizedDate;
+    });
+
+    final entry = await widget.loadDiaryEntryUseCase(
+      diaryId: widget.diary.id,
+      date: normalizedDate,
+    );
+
+    if (!mounted) {
       return;
     }
 
-    String? password;
-    if (!isPublic) {
-      password = await _promptNewPassword();
-      if (!mounted || password == null) {
-        setState(() => _isPublic = true);
-        return;
-      }
+    _contentController.text = entry?.content ?? '';
+    setState(() => _isLoadingEntry = false);
+  }
+
+  static DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  void _applyMarkdownMarker(String marker) {
+    final text = _contentController.text;
+    final selection = _contentController.selection;
+
+    if (!selection.isValid || text.isEmpty) {
+      return;
     }
 
-    setState(() {
-      _isUpdatingAccess = true;
-      _isPublic = isPublic;
-    });
+    final targetSelection = selection.isCollapsed
+        ? _expandToCurrentWord(text, selection.start)
+        : selection;
+
+    if (!targetSelection.isValid ||
+        targetSelection.start == targetSelection.end) {
+      return;
+    }
+
+    final selectedText =
+        text.substring(targetSelection.start, targetSelection.end);
+    final wrappedText = selectedText.startsWith(marker) &&
+            selectedText.endsWith(marker) &&
+            selectedText.length > marker.length * 2
+        ? selectedText.substring(
+            marker.length, selectedText.length - marker.length)
+        : '$marker$selectedText$marker';
 
     try {
       await widget.updateDiaryAccessUseCase(
@@ -284,16 +314,54 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const SizedBox(height: 12),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  value: _isPublic,
-                  title: const Text(AppStrings.diaryPublicLabel),
-                  subtitle: Text(
-                    _isPublic
-                        ? AppStrings.diaryPublicDescription
-                        : AppStrings.diaryPrivateDescription,
-                  ),
-                  onChanged: _isUpdatingAccess ? null : _updateVisibility,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    IconButton(
+                      tooltip: 'Negrito (.md)',
+                      onPressed: () => _applyMarkdownMarker('**'),
+                      icon: const Icon(Icons.format_bold),
+                    ),
+                    IconButton(
+                      tooltip: 'Itálico (.md)',
+                      onPressed: () => _applyMarkdownMarker('*'),
+                      icon: const Icon(Icons.format_italic),
+                    ),
+                    IconButton(
+                      tooltip: 'Alinhar à esquerda',
+                      onPressed: () =>
+                          setState(() => _textAlign = TextAlign.left),
+                      icon: Icon(
+                        Icons.format_align_left,
+                        color: _textAlign == TextAlign.left
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Centralizar',
+                      onPressed: () =>
+                          setState(() => _textAlign = TextAlign.center),
+                      icon: Icon(
+                        Icons.format_align_center,
+                        color: _textAlign == TextAlign.center
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Alinhar à direita',
+                      onPressed: () =>
+                          setState(() => _textAlign = TextAlign.right),
+                      icon: Icon(
+                        Icons.format_align_right,
+                        color: _textAlign == TextAlign.right
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 QuillSimpleToolbar(
@@ -311,12 +379,17 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(context).dividerColor,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
+                  child: TextField(
+                    controller: _contentController,
+                    enabled: !_isLoadingEntry,
+                    expands: true,
+                    maxLines: null,
+                    minLines: null,
+                    maxLength: 4000,
+                    textAlign: _textAlign,
+                    style: TextStyle(
+                      fontSize: isCompact ? 14 : 16,
+                      height: 1.4,
                     ),
                     child: QuillEditor(
                       controller: _contentController,
