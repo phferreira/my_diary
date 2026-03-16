@@ -16,6 +16,7 @@ class DiaryEditorPage extends StatefulWidget {
     required this.loadDiaryEntryUseCase,
     required this.saveDiaryEntryUseCase,
     required this.updateDiaryAccessUseCase,
+    this.initialDate,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class DiaryEditorPage extends StatefulWidget {
   final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
   final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
+  final DateTime? initialDate;
 
   @override
   State<DiaryEditorPage> createState() => _DiaryEditorPageState();
@@ -36,7 +38,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   bool _isPublic = false;
   bool _isUpdatingAccess = false;
   bool _isLoadingEntry = false;
-  DateTime _selectedDate = _normalizeDate(DateTime.now());
+  late DateTime _selectedDate;
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       selection: const TextSelection.collapsed(offset: 0),
     );
     _isPublic = widget.diary.isPublic;
+    _selectedDate = _normalizeDate(widget.initialDate ?? DateTime.now());
     _loadEntryForDate(_selectedDate);
   }
 
@@ -331,6 +334,37 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 700;
     final localizations = MaterialLocalizations.of(context);
+    final dateLabel = localizations.formatFullDate(_selectedDate);
+
+    final content = isCompact
+        ? _DiaryEditorMobileLayout(
+            dateLabel: dateLabel,
+            isLoadingEntry: _isLoadingEntry,
+            isPublic: _isPublic,
+            isUpdatingAccess: _isUpdatingAccess,
+            contentController: _contentController,
+            editorFocusNode: _editorFocusNode,
+            editorScrollController: _editorScrollController,
+            onSelectDate: _selectDate,
+            onChangeDay: _changeDay,
+            onChangeMonth: _changeMonth,
+            onUpdateVisibility: _updateVisibility,
+            onSave: _saveContent,
+          )
+        : _DiaryEditorDesktopLayout(
+            dateLabel: dateLabel,
+            isLoadingEntry: _isLoadingEntry,
+            isPublic: _isPublic,
+            isUpdatingAccess: _isUpdatingAccess,
+            contentController: _contentController,
+            editorFocusNode: _editorFocusNode,
+            editorScrollController: _editorScrollController,
+            onSelectDate: _selectDate,
+            onChangeDay: _changeDay,
+            onChangeMonth: _changeMonth,
+            onUpdateVisibility: _updateVisibility,
+            onSave: _saveContent,
+          );
 
     return Scaffold(
       appBar: AppBar(
@@ -341,108 +375,268 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
-          child: AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    IconButton(
-                      tooltip: AppStrings.previousMonth,
-                      onPressed:
-                          _isLoadingEntry ? null : () => _changeMonth(-1),
-                      icon: const Icon(Icons.keyboard_double_arrow_left),
-                    ),
-                    IconButton(
-                      tooltip: AppStrings.previousDay,
-                      onPressed: _isLoadingEntry ? null : () => _changeDay(-1),
-                      icon: const Icon(Icons.chevron_left),
-                    ),
-                    TextButton(
-                      onPressed: _isLoadingEntry ? null : _selectDate,
-                      child: Text(
-                        localizations.formatFullDate(_selectedDate),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: AppStrings.nextDay,
-                      onPressed: _isLoadingEntry ? null : () => _changeDay(1),
-                      icon: const Icon(Icons.chevron_right),
-                    ),
-                    IconButton(
-                      tooltip: AppStrings.nextMonth,
-                      onPressed: _isLoadingEntry ? null : () => _changeMonth(1),
-                      icon: const Icon(Icons.keyboard_double_arrow_right),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  value: _isPublic,
-                  title: const Text(AppStrings.diaryPublicLabel),
-                  subtitle: Text(
-                    _isPublic
-                        ? AppStrings.diaryPublicDescription
-                        : AppStrings.diaryPrivateDescription,
-                  ),
-                  onChanged: _isUpdatingAccess ? null : _updateVisibility,
-                ),
-                const SizedBox(height: 12),
-                QuillSimpleToolbar(
-                  controller: _contentController,
-                  config: QuillSimpleToolbarConfig(
-                    multiRowsDisplay: !isCompact,
-                    showAlignmentButtons: true,
-                    showCodeBlock: false,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  AppStrings.diaryEditorContentLabel,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(context).dividerColor,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: QuillEditor(
-                      controller: _contentController,
-                      focusNode: _editorFocusNode,
-                      scrollController: _editorScrollController,
-                      config: const QuillEditorConfig(
-                        padding: EdgeInsets.all(12),
-                        placeholder: AppStrings.diaryEditorContentHint,
-                        expands: true,
-                        autoFocus: false,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: SizedBox(
-                    width: isCompact ? double.infinity : 180,
-                    child: AppPrimaryButton(
-                      onPressed: _saveContent,
-                      label: AppStrings.save,
-                    ),
-                  ),
-                ),
-              ],
+          child: AppSurfaceCard(child: content),
+        ),
+      ),
+    );
+  }
+}
+
+class _DiaryEditorMobileLayout extends StatelessWidget {
+  const _DiaryEditorMobileLayout({
+    required this.dateLabel,
+    required this.isLoadingEntry,
+    required this.isPublic,
+    required this.isUpdatingAccess,
+    required this.contentController,
+    required this.editorFocusNode,
+    required this.editorScrollController,
+    required this.onSelectDate,
+    required this.onChangeDay,
+    required this.onChangeMonth,
+    required this.onUpdateVisibility,
+    required this.onSave,
+  });
+
+  static const Key layoutKey = Key('diary-editor-mobile');
+
+  final String dateLabel;
+  final bool isLoadingEntry;
+  final bool isPublic;
+  final bool isUpdatingAccess;
+  final QuillController contentController;
+  final FocusNode editorFocusNode;
+  final ScrollController editorScrollController;
+  final VoidCallback onSelectDate;
+  final Future<void> Function(int delta) onChangeDay;
+  final Future<void> Function(int delta) onChangeMonth;
+  final ValueChanged<bool> onUpdateVisibility;
+  final Future<void> Function() onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DiaryEditorContent(
+      key: layoutKey,
+      dateHeader: Column(
+        children: <Widget>[
+          TextButton(
+            onPressed: isLoadingEntry ? null : onSelectDate,
+            child: Text(
+              dateLabel,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            children: <Widget>[
+              IconButton(
+                tooltip: AppStrings.previousMonth,
+                onPressed: isLoadingEntry ? null : () => onChangeMonth(-1),
+                icon: const Icon(Icons.keyboard_double_arrow_left),
+              ),
+              IconButton(
+                tooltip: AppStrings.previousDay,
+                onPressed: isLoadingEntry ? null : () => onChangeDay(-1),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                tooltip: AppStrings.nextDay,
+                onPressed: isLoadingEntry ? null : () => onChangeDay(1),
+                icon: const Icon(Icons.chevron_right),
+              ),
+              IconButton(
+                tooltip: AppStrings.nextMonth,
+                onPressed: isLoadingEntry ? null : () => onChangeMonth(1),
+                icon: const Icon(Icons.keyboard_double_arrow_right),
+              ),
+            ],
+          ),
+        ],
+      ),
+      isCompact: true,
+      isPublic: isPublic,
+      isUpdatingAccess: isUpdatingAccess,
+      contentController: contentController,
+      editorFocusNode: editorFocusNode,
+      editorScrollController: editorScrollController,
+      onUpdateVisibility: onUpdateVisibility,
+      onSave: onSave,
+    );
+  }
+}
+
+class _DiaryEditorDesktopLayout extends StatelessWidget {
+  const _DiaryEditorDesktopLayout({
+    required this.dateLabel,
+    required this.isLoadingEntry,
+    required this.isPublic,
+    required this.isUpdatingAccess,
+    required this.contentController,
+    required this.editorFocusNode,
+    required this.editorScrollController,
+    required this.onSelectDate,
+    required this.onChangeDay,
+    required this.onChangeMonth,
+    required this.onUpdateVisibility,
+    required this.onSave,
+  });
+
+  static const Key layoutKey = Key('diary-editor-desktop');
+
+  final String dateLabel;
+  final bool isLoadingEntry;
+  final bool isPublic;
+  final bool isUpdatingAccess;
+  final QuillController contentController;
+  final FocusNode editorFocusNode;
+  final ScrollController editorScrollController;
+  final VoidCallback onSelectDate;
+  final Future<void> Function(int delta) onChangeDay;
+  final Future<void> Function(int delta) onChangeMonth;
+  final ValueChanged<bool> onUpdateVisibility;
+  final Future<void> Function() onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DiaryEditorContent(
+      key: layoutKey,
+      dateHeader: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          IconButton(
+            tooltip: AppStrings.previousMonth,
+            onPressed: isLoadingEntry ? null : () => onChangeMonth(-1),
+            icon: const Icon(Icons.keyboard_double_arrow_left),
+          ),
+          IconButton(
+            tooltip: AppStrings.previousDay,
+            onPressed: isLoadingEntry ? null : () => onChangeDay(-1),
+            icon: const Icon(Icons.chevron_left),
+          ),
+          TextButton(
+            onPressed: isLoadingEntry ? null : onSelectDate,
+            child: Text(
+              dateLabel,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          IconButton(
+            tooltip: AppStrings.nextDay,
+            onPressed: isLoadingEntry ? null : () => onChangeDay(1),
+            icon: const Icon(Icons.chevron_right),
+          ),
+          IconButton(
+            tooltip: AppStrings.nextMonth,
+            onPressed: isLoadingEntry ? null : () => onChangeMonth(1),
+            icon: const Icon(Icons.keyboard_double_arrow_right),
+          ),
+        ],
+      ),
+      isCompact: false,
+      isPublic: isPublic,
+      isUpdatingAccess: isUpdatingAccess,
+      contentController: contentController,
+      editorFocusNode: editorFocusNode,
+      editorScrollController: editorScrollController,
+      onUpdateVisibility: onUpdateVisibility,
+      onSave: onSave,
+    );
+  }
+}
+
+class _DiaryEditorContent extends StatelessWidget {
+  const _DiaryEditorContent({
+    required this.dateHeader,
+    required this.isCompact,
+    required this.isPublic,
+    required this.isUpdatingAccess,
+    required this.contentController,
+    required this.editorFocusNode,
+    required this.editorScrollController,
+    required this.onUpdateVisibility,
+    required this.onSave,
+    super.key,
+  });
+
+  final Widget dateHeader;
+  final bool isCompact;
+  final bool isPublic;
+  final bool isUpdatingAccess;
+  final QuillController contentController;
+  final FocusNode editorFocusNode;
+  final ScrollController editorScrollController;
+  final ValueChanged<bool> onUpdateVisibility;
+  final Future<void> Function() onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        const SizedBox(height: 12),
+        dateHeader,
+        const SizedBox(height: 12),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: isPublic,
+          title: const Text(AppStrings.diaryPublicLabel),
+          subtitle: Text(
+            isPublic
+                ? AppStrings.diaryPublicDescription
+                : AppStrings.diaryPrivateDescription,
+          ),
+          onChanged: isUpdatingAccess ? null : onUpdateVisibility,
+        ),
+        const SizedBox(height: 12),
+        QuillSimpleToolbar(
+          controller: contentController,
+          config: QuillSimpleToolbarConfig(
+            multiRowsDisplay: !isCompact,
+            showAlignmentButtons: true,
+            showCodeBlock: false,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          AppStrings.diaryEditorContentLabel,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Theme.of(context).dividerColor,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: QuillEditor(
+              controller: contentController,
+              focusNode: editorFocusNode,
+              scrollController: editorScrollController,
+              config: const QuillEditorConfig(
+                padding: EdgeInsets.all(12),
+                placeholder: AppStrings.diaryEditorContentHint,
+                expands: true,
+                autoFocus: false,
+              ),
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: isCompact ? double.infinity : 180,
+            child: AppPrimaryButton(
+              onPressed: onSave,
+              label: AppStrings.save,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
