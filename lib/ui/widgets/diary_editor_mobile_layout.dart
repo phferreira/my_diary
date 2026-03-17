@@ -17,6 +17,7 @@ class DiaryEditorMobileLayout extends StatelessWidget {
     required this.onChangeMonth,
     required this.onUpdateVisibility,
     required this.onSave,
+    required this.editorContainerKey,
     super.key,
   });
 
@@ -34,6 +35,7 @@ class DiaryEditorMobileLayout extends StatelessWidget {
   final Future<void> Function(int delta) onChangeMonth;
   final ValueChanged<bool> onUpdateVisibility;
   final Future<void> Function() onSave;
+  final Key editorContainerKey;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +85,7 @@ class DiaryEditorMobileLayout extends StatelessWidget {
       contentController: contentController,
       editorFocusNode: editorFocusNode,
       editorScrollController: editorScrollController,
+      editorContainerKey: editorContainerKey,
       onUpdateVisibility: onUpdateVisibility,
       onSave: onSave,
     );
