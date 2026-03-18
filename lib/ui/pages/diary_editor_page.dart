@@ -35,6 +35,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   late final QuillController _contentController;
   final FocusNode _editorFocusNode = FocusNode();
   final ScrollController _editorScrollController = ScrollController();
+  final GlobalKey _editorContainerKey = GlobalKey();
 
   bool _isPublic = false;
   bool _isUpdatingAccess = false;
@@ -48,6 +49,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       document: Document(),
       selection: const TextSelection.collapsed(offset: 0),
     );
+    _editorFocusNode.addListener(_handleEditorFocus);
     _isPublic = widget.diary.isPublic;
     _selectedDate = _normalizeDate(widget.initialDate ?? DateTime.now());
     _loadEntryForDate(_selectedDate);
@@ -55,6 +57,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
   @override
   void dispose() {
+    _editorFocusNode.removeListener(_handleEditorFocus);
     _contentController.dispose();
     _editorScrollController.dispose();
     _editorFocusNode.dispose();
@@ -331,6 +334,35 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     return document;
   }
 
+  void _handleEditorFocus() {
+    if (!_editorFocusNode.hasFocus || !mounted) {
+      return;
+    }
+
+    final isCompact = MediaQuery.sizeOf(context).width < 700;
+    if (!isCompact) {
+      return;
+    }
+
+    final targetContext = _editorContainerKey.currentContext;
+    if (targetContext == null) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      Scrollable.ensureVisible(
+        targetContext,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        alignment: 0.2,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 700;
@@ -346,6 +378,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             contentController: _contentController,
             editorFocusNode: _editorFocusNode,
             editorScrollController: _editorScrollController,
+            editorContainerKey: _editorContainerKey,
             onSelectDate: _selectDate,
             onChangeDay: _changeDay,
             onChangeMonth: _changeMonth,
@@ -360,12 +393,15 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             contentController: _contentController,
             editorFocusNode: _editorFocusNode,
             editorScrollController: _editorScrollController,
+            editorContainerKey: _editorContainerKey,
             onSelectDate: _selectDate,
             onChangeDay: _changeDay,
             onChangeMonth: _changeMonth,
             onUpdateVisibility: _updateVisibility,
             onSave: _saveContent,
           );
+
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
       appBar: AppBar(
