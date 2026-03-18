@@ -14,7 +14,6 @@ class DiaryEditorContent extends StatelessWidget {
     required this.editorScrollController,
     required this.onUpdateVisibility,
     required this.onSave,
-    this.editorContainerKey,
     super.key,
   });
 
@@ -27,7 +26,6 @@ class DiaryEditorContent extends StatelessWidget {
   final ScrollController editorScrollController;
   final ValueChanged<bool> onUpdateVisibility;
   final Future<void> Function() onSave;
-  final Key? editorContainerKey;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +63,6 @@ class DiaryEditorContent extends StatelessWidget {
         const SizedBox(height: 8),
         Expanded(
           child: DecoratedBox(
-            key: editorContainerKey,
             decoration: BoxDecoration(
               border: Border.all(
                 color: Theme.of(context).dividerColor,
