@@ -373,8 +373,10 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
         title: Text(widget.diary.name),
       ),
       body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.sizeOf(context).height,
+        reverse: true,
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height -
+              MediaQuery.of(context).padding.top * 2,
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
