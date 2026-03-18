@@ -3,18 +3,32 @@
   "configurations": [
     {
       "name": "DEV - Flutter Web (Chrome)",
-      "request" : "launch",
-      "type" : "dart",
-      "program" : "${workspaceFolder}/lib/main.dart",
-      "cwd" : "${workspaceFolder}",
+      "request": "launch",
+      "type": "dart",
+      "program": "${workspaceFolder}/lib/main.dart",
+      "cwd": "${workspaceFolder}",
       "toolArgs": [
-        "-d", "chrome", 
-        "--dart-define-from-file", ".dev.env.json",
-        "--web-port", "8081",
+        "-d",
+        "chrome",
+        "--dart-define-from-file",
+        ".dev.env.json",
+        "--web-port",
+        "8081",
         "--web-experimental-hot-reload"
-
+      ]
+    },
+    {
+      "name": "DEV - Flutter Mobile (Android)",
+      "request": "launch",
+      "type": "dart",
+      "program": "${workspaceFolder}/lib/main.dart",
+      "cwd": "${workspaceFolder}",
+      "toolArgs": [
+        "-d",
+        "0069268444",
+        "--dart-define-from-file",
+        ".dev.env.json"
       ]
     }
   ]
 }
-
