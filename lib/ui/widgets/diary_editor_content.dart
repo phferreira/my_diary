@@ -8,11 +8,9 @@ class DiaryEditorContent extends StatelessWidget {
     required this.dateHeader,
     required this.isCompact,
     required this.isPublic,
-    required this.isUpdatingAccess,
     required this.contentController,
     required this.editorFocusNode,
     required this.editorScrollController,
-    required this.onUpdateVisibility,
     required this.onSave,
     super.key,
   });
@@ -20,11 +18,9 @@ class DiaryEditorContent extends StatelessWidget {
   final Widget dateHeader;
   final bool isCompact;
   final bool isPublic;
-  final bool isUpdatingAccess;
   final QuillController contentController;
   final FocusNode editorFocusNode;
   final ScrollController editorScrollController;
-  final ValueChanged<bool> onUpdateVisibility;
   final Future<void> Function() onSave;
 
   @override
@@ -44,7 +40,7 @@ class DiaryEditorContent extends StatelessWidget {
                 ? AppStrings.diaryPublicDescription
                 : AppStrings.diaryPrivateDescription,
           ),
-          onChanged: isUpdatingAccess ? null : onUpdateVisibility,
+          onChanged: null,
         ),
         const SizedBox(height: 12),
         QuillSimpleToolbar(

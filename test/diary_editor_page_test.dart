@@ -11,10 +11,11 @@ import 'package:my_diary/ui/pages/diary_editor_page.dart';
 void main() {
   DiaryEditorPage buildSubject({
     required InMemoryDiaryRepository repository,
+    Diary diary = const Diary(id: '1', name: 'Diario', content: ''),
     DateTime? initialDate,
   }) {
     return DiaryEditorPage(
-      diary: const Diary(id: '1', name: 'Diario', content: ''),
+      diary: diary,
       loadDiaryEntryUseCase: LoadDiaryEntryUseCase(repository),
       saveDiaryEntryUseCase: SaveDiaryEntryUseCase(repository),
       updateDiaryAccessUseCase: UpdateDiaryAccessUseCase(repository),
@@ -97,5 +98,39 @@ void main() {
 
     expect(find.byKey(const Key('diary-editor-desktop')), findsOneWidget);
     expect(find.byKey(const Key('diary-editor-mobile')), findsNothing);
+  });
+
+  testWidgets('mantém controle de diário público visível mas desabilitado',
+      (WidgetTester tester) async {
+    final repository = InMemoryDiaryRepository(
+      seedDiaries: const <Diary>[
+        Diary(id: '1', name: 'Diario', content: '', isPublic: true),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates:
+            FlutterQuillLocalizations.localizationsDelegates,
+        supportedLocales: FlutterQuillLocalizations.supportedLocales,
+        home: buildSubject(
+          repository: repository,
+          diary: const Diary(
+            id: '1',
+            name: 'Diario',
+            content: '',
+            isPublic: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final publicSwitch = tester.widget<SwitchListTile>(
+      find.byType(SwitchListTile),
+    );
+    expect(publicSwitch.value, isTrue);
+    expect(publicSwitch.onChanged, isNull);
   });
 }

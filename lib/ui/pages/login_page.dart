@@ -258,7 +258,6 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  bool _isPublic = false;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   String? _error;
@@ -273,24 +272,20 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
   Future<void> _handleCreate() async {
     setState(() => _error = null);
 
-    String? password;
-
-    if (!_isPublic) {
-      if (_passwordController.text.trim().length < 4) {
-        setState(() => _error = AppStrings.passwordMinLength);
-        return;
-      }
-
-      if (_passwordController.text != _confirmPasswordController.text) {
-        setState(() => _error = AppStrings.passwordsDontMatch);
-        return;
-      }
-
-      password = _passwordController.text.trim();
+    if (_passwordController.text.trim().length < 4) {
+      setState(() => _error = AppStrings.passwordMinLength);
+      return;
     }
 
-    final diary =
-        await widget.onCreate(password: password, isPublic: _isPublic);
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _error = AppStrings.passwordsDontMatch);
+      return;
+    }
+
+    final diary = await widget.onCreate(
+      password: _passwordController.text.trim(),
+      isPublic: false,
+    );
     if (!mounted) {
       return;
     }
@@ -309,53 +304,51 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
           children: <Widget>[
             Text('${AppStrings.createDiaryQuestion}\n"${widget.diaryName}"'),
             const SizedBox(height: 16),
-            SwitchListTile.adaptive(
+            const SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              value: _isPublic,
-              title: const Text(AppStrings.createWithoutPassword),
-              onChanged: (bool value) => setState(() => _isPublic = value),
+              value: false,
+              title: Text(AppStrings.createWithoutPassword),
+              onChanged: null,
             ),
-            if (!_isPublic) ...<Widget>[
-              TextField(
-                controller: _passwordController,
-                obscureText: !_showPassword,
-                decoration: InputDecoration(
-                  labelText: AppStrings.newDiaryPasswordLabel,
-                  hintText: AppStrings.newDiaryPasswordHint,
-                  suffixIcon: IconButton(
-                    tooltip: _showPassword
-                        ? AppStrings.hidePassword
-                        : AppStrings.showPassword,
-                    icon: Icon(
-                      _showPassword ? Icons.visibility_off : Icons.visibility,
-                    ),
-                    onPressed: () =>
-                        setState(() => _showPassword = !_showPassword),
+            TextField(
+              controller: _passwordController,
+              obscureText: !_showPassword,
+              decoration: InputDecoration(
+                labelText: AppStrings.newDiaryPasswordLabel,
+                hintText: AppStrings.newDiaryPasswordHint,
+                suffixIcon: IconButton(
+                  tooltip: _showPassword
+                      ? AppStrings.hidePassword
+                      : AppStrings.showPassword,
+                  icon: Icon(
+                    _showPassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () =>
+                      setState(() => _showPassword = !_showPassword),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: !_showConfirmPassword,
+              decoration: InputDecoration(
+                labelText: AppStrings.confirmPasswordLabel,
+                suffixIcon: IconButton(
+                  tooltip: _showConfirmPassword
+                      ? AppStrings.hidePassword
+                      : AppStrings.showPassword,
+                  icon: Icon(
+                    _showConfirmPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                  ),
+                  onPressed: () => setState(
+                    () => _showConfirmPassword = !_showConfirmPassword,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _confirmPasswordController,
-                obscureText: !_showConfirmPassword,
-                decoration: InputDecoration(
-                  labelText: AppStrings.confirmPasswordLabel,
-                  suffixIcon: IconButton(
-                    tooltip: _showConfirmPassword
-                        ? AppStrings.hidePassword
-                        : AppStrings.showPassword,
-                    icon: Icon(
-                      _showConfirmPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () => setState(
-                      () => _showConfirmPassword = !_showConfirmPassword,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
             if (_error != null) ...<Widget>[
               const SizedBox(height: 8),
               Text(

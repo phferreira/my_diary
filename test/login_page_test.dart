@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
 import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
@@ -127,5 +128,38 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Criar diário'), findsOneWidget);
+  });
+
+  testWidgets('mantém campos de criação visíveis e opção pública desabilitada',
+      (
+    WidgetTester tester,
+  ) async {
+    final deps = buildDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LoginPage(
+          viewModel: deps.viewModel,
+          loadDiaryEntryUseCase: deps.loadEntryUseCase,
+          saveDiaryEntryUseCase: deps.saveEntryUseCase,
+          updateDiaryAccessUseCase: deps.updateAccessUseCase,
+          appVersion: '1.0.0+1',
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField), 'Novo Diario');
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Encontrar diário'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.createDiaryTitle), findsOneWidget);
+    expect(find.text(AppStrings.newDiaryPasswordLabel), findsOneWidget);
+    expect(find.text(AppStrings.confirmPasswordLabel), findsOneWidget);
+
+    final createWithoutPassword = tester.widget<SwitchListTile>(
+      find.byType(SwitchListTile),
+    );
+    expect(createWithoutPassword.onChanged, isNull);
+    expect(createWithoutPassword.value, isFalse);
   });
 }

@@ -37,7 +37,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   final ScrollController _editorScrollController = ScrollController();
 
   bool _isPublic = false;
-  bool _isUpdatingAccess = false;
   bool _isLoadingEntry = false;
   late DateTime _selectedDate;
 
@@ -131,175 +130,6 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     return DateTime(date.year, date.month, date.day);
   }
 
-  Future<void> _updateVisibility(bool isPublic) async {
-    if (_isUpdatingAccess || isPublic == _isPublic) {
-      return;
-    }
-
-    String? password;
-    if (!isPublic) {
-      password = await _promptNewPassword();
-      if (!mounted || password == null) {
-        setState(() => _isPublic = true);
-        return;
-      }
-    }
-
-    setState(() {
-      _isUpdatingAccess = true;
-      _isPublic = isPublic;
-    });
-
-    try {
-      await widget.updateDiaryAccessUseCase(
-        diaryId: widget.diary.id,
-        isPublic: isPublic,
-        password: password,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isPublic
-                ? AppStrings.diaryPublicEnabled
-                : AppStrings.diaryPrivateEnabled,
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() => _isPublic = !isPublic);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.diaryVisibilityError)),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isUpdatingAccess = false);
-      }
-    }
-  }
-
-  Future<String?> _promptNewPassword() async {
-    final passwordController = TextEditingController();
-    final confirmController = TextEditingController();
-    String? errorMessage;
-    bool showPassword = false;
-    bool showConfirmation = false;
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text(AppStrings.setDiaryPasswordTitle),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    const Text(AppStrings.setDiaryPasswordDescription),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: !showPassword,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.newDiaryPasswordLabel,
-                        hintText: AppStrings.newDiaryPasswordHint,
-                        suffixIcon: IconButton(
-                          tooltip: showPassword
-                              ? AppStrings.hidePassword
-                              : AppStrings.showPassword,
-                          icon: Icon(
-                            showPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () => setState(
-                            () => showPassword = !showPassword,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: confirmController,
-                      obscureText: !showConfirmation,
-                      decoration: InputDecoration(
-                        labelText: AppStrings.confirmPasswordLabel,
-                        suffixIcon: IconButton(
-                          tooltip: showConfirmation
-                              ? AppStrings.hidePassword
-                              : AppStrings.showPassword,
-                          icon: Icon(
-                            showConfirmation
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () => setState(
-                            () => showConfirmation = !showConfirmation,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (errorMessage != null) ...<Widget>[
-                      const SizedBox(height: 8),
-                      Text(
-                        errorMessage!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(AppStrings.cancel),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    final password = passwordController.text.trim();
-                    final confirmation = confirmController.text.trim();
-
-                    if (password.length < 4) {
-                      setState(
-                          () => errorMessage = AppStrings.passwordMinLength);
-                      return;
-                    }
-
-                    if (password != confirmation) {
-                      setState(
-                          () => errorMessage = AppStrings.passwordsDontMatch);
-                      return;
-                    }
-
-                    Navigator.of(context).pop(password);
-                  },
-                  child: const Text(AppStrings.confirm),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    passwordController.dispose();
-    confirmController.dispose();
-
-    return result;
-  }
-
   Document _loadDocument(String content) {
     if (content.trim().isEmpty) {
       return Document();
@@ -342,28 +172,24 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             dateLabel: dateLabel,
             isLoadingEntry: _isLoadingEntry,
             isPublic: _isPublic,
-            isUpdatingAccess: _isUpdatingAccess,
             contentController: _contentController,
             editorFocusNode: _editorFocusNode,
             editorScrollController: _editorScrollController,
             onSelectDate: _selectDate,
             onChangeDay: _changeDay,
             onChangeMonth: _changeMonth,
-            onUpdateVisibility: _updateVisibility,
             onSave: _saveContent,
           )
         : DiaryEditorDesktopLayout(
             dateLabel: dateLabel,
             isLoadingEntry: _isLoadingEntry,
             isPublic: _isPublic,
-            isUpdatingAccess: _isUpdatingAccess,
             contentController: _contentController,
             editorFocusNode: _editorFocusNode,
             editorScrollController: _editorScrollController,
             onSelectDate: _selectDate,
             onChangeDay: _changeDay,
             onChangeMonth: _changeMonth,
-            onUpdateVisibility: _updateVisibility,
             onSave: _saveContent,
           );
 
