@@ -10,14 +10,10 @@ This project is a personal website built with **Flutter Web** (Dart), published 
 - Use **idiomatic Dart** and prioritize readability over overly complex solutions.
 - Prefer small, reusable widgets; avoid putting too much logic directly inside `build`.
 - Keep consistency with `analysis_options.yaml` and run `fvm dart format` on changed files (use `dart format` if `fvm` is not installed).
-- For relevant visual changes, validate locally on web (`fvm flutter run -d chrome`, or `flutter run -d chrome` if `fvm` is not installed) and include evidence when possible.
-- Consider the existing **Design System** when developing or updating widgets, keeping visual and behavioral consistency across the app.
-- Before adding text directly in widgets, check and prefer string constants in `lib/core/constants/app_strings.dart`.
 
 ## Architecture standard
 - Follow **Clean Architecture** principles for all new features.
 - Keep clear separation of concerns between layers:
-  - **Presentation/UI**: widgets, page state, and user interaction.
   - **Domain/Core**: business rules, entities, and use cases.
   - **Data**: repositories, data sources, and external integrations.
 - Ensure dependencies point inward (UI -> Domain/Core <- Data abstractions).
@@ -30,6 +26,13 @@ This project is a personal website built with **Flutter Web** (Dart), published 
   - `lib/ui/`: presentation layer (pages/widgets/view logic).
   - `test/`: unit and widget tests.
 - New features should be added under these folders, preserving the same layering and naming patterns already used in the project.
+
+## Layer-specific instructions
+- Follow the nested `AGENTS.md` files inside feature folders when working in those subtrees.
+- `lib/core/` has its own instructions for domain rules, entities, and use cases.
+- `lib/data/` has its own instructions for repository implementations and integrations.
+- `lib/ui/` has its own instructions for presentation logic, visual consistency, and UI validation.
+- `test/` has its own instructions for test organization and behavior verification.
 
 ## Feature workflow
 For new features:
