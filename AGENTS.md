@@ -51,7 +51,4 @@ If `fvm` is not installed, replace the commands above with `flutter ...`.
 If any command cannot be run due to environment limitations, document it in the final summary.
 
 ## Version control standard
-- Use **Conventional Commits** as the default for all commit messages.
-- Follow the format: `type(scope): short description`.
-- Prefer clear types such as `feat`, `fix`, `docs`, `refactor`, `test`, and `chore`.
-- Prefer atomic/unitary commits per specific change to keep diffs clear and focused.
+- When creating commits, use **Conventional Commits**.
