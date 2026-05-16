@@ -16,6 +16,22 @@ doc/api/
 .dev.env.json
 .fvm/
 
+# Local agent / IDE metadata
+.codex
+.codex/
+.idea/
+*.iml
+
+# Flutter platform folders that are not needed for a web-only app
+android/
+ios/
+linux/
+windows/
+web/
+
+# Golden test failure artifacts
+test/goldens/failures/
+
 # Avoid committing generated Javascript files:
 *.dart.js
 # Produced by the --dump-info flag.
@@ -29,4 +45,3 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
-web/
