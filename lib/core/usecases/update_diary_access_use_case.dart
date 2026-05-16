@@ -9,11 +9,13 @@ class UpdateDiaryAccessUseCase {
     required String diaryId,
     required bool isPublic,
     String? password,
+    String? publicPassword,
   }) {
     return _repository.updateDiaryAccess(
       id: diaryId,
       isPublic: isPublic,
       password: password,
+      publicPassword: publicPassword,
     );
   }
 }
