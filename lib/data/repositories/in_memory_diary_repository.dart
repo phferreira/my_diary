@@ -51,9 +51,14 @@ class InMemoryDiaryRepository implements DiaryRepository {
     required String name,
     required String? password,
     required bool isPublic,
+    String? publicPassword,
   }) async {
     final hashedPassword = _buildHashedPassword(
       password: password,
+      isPublic: isPublic,
+    );
+    final hashedPublicPassword = _buildHashedPublicPassword(
+      publicPassword: publicPassword,
       isPublic: isPublic,
     );
 
@@ -62,6 +67,7 @@ class InMemoryDiaryRepository implements DiaryRepository {
       name: name,
       content: '',
       password: hashedPassword,
+      publicPassword: hashedPublicPassword,
       isPublic: isPublic,
     );
     _diaries.add(diary);
@@ -105,21 +111,29 @@ class InMemoryDiaryRepository implements DiaryRepository {
     required String id,
     required bool isPublic,
     String? password,
+    String? publicPassword,
   }) async {
     final index = _diaries.indexWhere((Diary diary) => diary.id == id);
     if (index == -1) {
       return;
     }
 
+    final currentDiary = _diaries[index];
     final updatedPassword = _resolveUpdatedPassword(
-      diary: _diaries[index],
+      diary: currentDiary,
       isPublic: isPublic,
       password: password,
+    );
+    final updatedPublicPassword = _resolveUpdatedPublicPassword(
+      diary: currentDiary,
+      isPublic: isPublic,
+      publicPassword: publicPassword,
     );
 
     _diaries[index] = _diaries[index].copyWith(
       isPublic: isPublic,
       password: updatedPassword,
+      publicPassword: updatedPublicPassword,
     );
   }
 
@@ -127,7 +141,7 @@ class InMemoryDiaryRepository implements DiaryRepository {
     required String? password,
     required bool isPublic,
   }) {
-    if (isPublic || password == null || password.trim().isEmpty) {
+    if (password == null || password.trim().isEmpty) {
       return null;
     }
 
@@ -140,7 +154,7 @@ class InMemoryDiaryRepository implements DiaryRepository {
     required String? password,
   }) {
     if (isPublic) {
-      return null;
+      return diary.password;
     }
 
     final trimmedPassword = password?.trim();
@@ -149,6 +163,48 @@ class InMemoryDiaryRepository implements DiaryRepository {
     }
 
     return diary.password;
+  }
+
+  String? _buildHashedPublicPassword({
+    required String? publicPassword,
+    required bool isPublic,
+  }) {
+    if (!isPublic || publicPassword == null || publicPassword.trim().isEmpty) {
+      return null;
+    }
+
+    return PasswordHasher.hash(publicPassword);
+  }
+
+  String? _resolveUpdatedPublicPassword({
+    required Diary diary,
+    required bool isPublic,
+    required String? publicPassword,
+  }) {
+    if (!isPublic) {
+      return null;
+    }
+
+    final trimmedPassword = publicPassword?.trim();
+    if (trimmedPassword == null || trimmedPassword.isEmpty) {
+      if (diary.publicPassword == null) {
+        throw ArgumentError(
+          'publicPassword',
+          'A senha pública é obrigatória para diário público.',
+        );
+      }
+
+      return diary.publicPassword;
+    }
+
+    if (diary.hasPassword && diary.matchesPassword(trimmedPassword)) {
+      throw ArgumentError(
+        'publicPassword',
+        'A senha pública deve ser diferente da senha mestre.',
+      );
+    }
+
+    return PasswordHasher.hash(trimmedPassword);
   }
 
   void _seedEntriesFromDiaries() {
