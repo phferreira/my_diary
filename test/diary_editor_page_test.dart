@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
 import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
@@ -13,12 +14,14 @@ void main() {
     required InMemoryDiaryRepository repository,
     Diary diary = const Diary(id: '1', name: 'Diario', content: ''),
     DateTime? initialDate,
+    bool canEdit = true,
   }) {
     return DiaryEditorPage(
       diary: diary,
       loadDiaryEntryUseCase: LoadDiaryEntryUseCase(repository),
       saveDiaryEntryUseCase: SaveDiaryEntryUseCase(repository),
       updateDiaryAccessUseCase: UpdateDiaryAccessUseCase(repository),
+      canEdit: canEdit,
       initialDate: initialDate,
     );
   }
@@ -100,7 +103,7 @@ void main() {
     expect(find.byKey(const Key('diary-editor-mobile')), findsNothing);
   });
 
-  testWidgets('mantém controle de diário público visível mas desabilitado',
+  testWidgets('mostra botão de configuração em modo editável',
       (WidgetTester tester) async {
     final repository = InMemoryDiaryRepository(
       seedDiaries: const <Diary>[
@@ -127,10 +130,51 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    final publicSwitch = tester.widget<SwitchListTile>(
-      find.byType(SwitchListTile),
+    expect(find.text(AppStrings.configuration), findsOneWidget);
+  });
+
+  testWidgets('abre diário público em modo somente leitura',
+      (WidgetTester tester) async {
+    final repository = InMemoryDiaryRepository(
+      seedDiaries: <Diary>[
+        Diary(
+          id: '1',
+          name: 'Diario',
+          content: '',
+          password: 'hash',
+          publicPassword: 'publica',
+          isPublic: true,
+        ),
+      ],
     );
-    expect(publicSwitch.value, isTrue);
-    expect(publicSwitch.onChanged, isNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates:
+            FlutterQuillLocalizations.localizationsDelegates,
+        supportedLocales: FlutterQuillLocalizations.supportedLocales,
+        home: buildSubject(
+          repository: repository,
+          diary: const Diary(
+            id: '1',
+            name: 'Diario',
+            content: '',
+            password: 'hash',
+            publicPassword: 'publica',
+            isPublic: true,
+          ),
+          canEdit: false,
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(AppStrings.publicAccessReadOnlyDescription),
+      findsOneWidget,
+    );
+    expect(find.text(AppStrings.configuration), findsNothing);
+    expect(find.byType(QuillSimpleToolbar), findsNothing);
   });
 }
