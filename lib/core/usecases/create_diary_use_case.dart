@@ -9,12 +9,11 @@ class CreateDiaryUseCase {
   Future<Diary> call({
     required String name,
     required String? password,
-    required bool isPublic,
   }) {
     return _repository.createDiary(
       name: name,
       password: password,
-      isPublic: isPublic,
+      isPublic: false,
     );
   }
 }
