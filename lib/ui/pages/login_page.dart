@@ -90,7 +90,10 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _openDiary(Diary diary) {
+  Future<void> _openDiary(
+    Diary diary, {
+    bool canEdit = true,
+  }) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DiaryEditorPage(
@@ -98,6 +101,7 @@ class _LoginPageState extends State<LoginPage> {
           loadDiaryEntryUseCase: widget.loadDiaryEntryUseCase,
           saveDiaryEntryUseCase: widget.saveDiaryEntryUseCase,
           updateDiaryAccessUseCase: widget.updateDiaryAccessUseCase,
+          canEdit: canEdit,
         ),
       ),
     );
@@ -155,7 +159,10 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    await _openDiary(unlockedDiary);
+    await _openDiary(
+      unlockedDiary.diary,
+      canEdit: unlockedDiary.canEdit,
+    );
   }
 
   Future<void> _promptCreateDiary(String diaryName) async {
@@ -164,11 +171,10 @@ class _LoginPageState extends State<LoginPage> {
       builder: (BuildContext context) {
         return _CreateDiaryDialog(
           diaryName: diaryName,
-          onCreate: ({required String? password, required bool isPublic}) {
+          onCreate: ({required String? password}) {
             return widget.viewModel.createDiary(
               name: diaryName,
               password: password,
-              isPublic: isPublic,
             );
           },
         );
@@ -244,10 +250,7 @@ class _CreateDiaryDialog extends StatefulWidget {
   });
 
   final String diaryName;
-  final Future<Diary> Function({
-    required String? password,
-    required bool isPublic,
-  }) onCreate;
+  final Future<Diary> Function({required String? password}) onCreate;
 
   @override
   State<_CreateDiaryDialog> createState() => _CreateDiaryDialogState();
@@ -284,7 +287,6 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
 
     final diary = await widget.onCreate(
       password: _passwordController.text.trim(),
-      isPublic: false,
     );
     if (!mounted) {
       return;
@@ -304,12 +306,6 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
           children: <Widget>[
             Text('${AppStrings.createDiaryQuestion}\n"${widget.diaryName}"'),
             const SizedBox(height: 16),
-            const SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              value: false,
-              title: Text(AppStrings.createWithoutPassword),
-              onChanged: null,
-            ),
             TextField(
               controller: _passwordController,
               obscureText: !_showPassword,
