@@ -8,6 +8,7 @@ class DiaryEditorDesktopLayout extends StatelessWidget {
     required this.dateLabel,
     required this.isLoadingEntry,
     required this.isPublic,
+    required this.canEdit,
     required this.contentController,
     required this.editorFocusNode,
     required this.editorScrollController,
@@ -15,6 +16,7 @@ class DiaryEditorDesktopLayout extends StatelessWidget {
     required this.onChangeDay,
     required this.onChangeMonth,
     required this.onSave,
+    required this.onConfigure,
     super.key,
   });
 
@@ -23,6 +25,7 @@ class DiaryEditorDesktopLayout extends StatelessWidget {
   final String dateLabel;
   final bool isLoadingEntry;
   final bool isPublic;
+  final bool canEdit;
   final QuillController contentController;
   final FocusNode editorFocusNode;
   final ScrollController editorScrollController;
@@ -30,6 +33,7 @@ class DiaryEditorDesktopLayout extends StatelessWidget {
   final Future<void> Function(int delta) onChangeDay;
   final Future<void> Function(int delta) onChangeMonth;
   final Future<void> Function() onSave;
+  final VoidCallback? onConfigure;
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +73,12 @@ class DiaryEditorDesktopLayout extends StatelessWidget {
       ),
       isCompact: false,
       isPublic: isPublic,
+      canEdit: canEdit,
       contentController: contentController,
       editorFocusNode: editorFocusNode,
       editorScrollController: editorScrollController,
       onSave: onSave,
+      onConfigure: onConfigure,
     );
   }
 }
