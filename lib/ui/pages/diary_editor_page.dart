@@ -17,6 +17,7 @@ class DiaryEditorPage extends StatefulWidget {
     required this.loadDiaryEntryUseCase,
     required this.saveDiaryEntryUseCase,
     required this.updateDiaryAccessUseCase,
+    this.canEdit = true,
     this.initialDate,
     super.key,
   });
@@ -25,6 +26,7 @@ class DiaryEditorPage extends StatefulWidget {
   final LoadDiaryEntryUseCase loadDiaryEntryUseCase;
   final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
+  final bool canEdit;
   final DateTime? initialDate;
 
   @override
@@ -47,6 +49,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       document: Document(),
       selection: const TextSelection.collapsed(offset: 0),
     );
+    _contentController.readOnly = !widget.canEdit;
     _isPublic = widget.diary.isPublic;
     _selectedDate = _normalizeDate(widget.initialDate ?? DateTime.now());
     _loadEntryForDate(_selectedDate);
@@ -61,6 +64,10 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
   }
 
   Future<void> _saveContent() async {
+    if (!widget.canEdit) {
+      return;
+    }
+
     await widget.saveDiaryEntryUseCase(
       diaryId: widget.diary.id,
       date: _selectedDate,
@@ -126,6 +133,61 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
     await _loadEntryForDate(nextDate);
   }
 
+  Future<void> _openConfiguration() async {
+    if (!widget.canEdit) {
+      return;
+    }
+
+    final config = await showDialog<_DiaryAccessConfigResult>(
+      context: context,
+      builder: (BuildContext context) {
+        return _DiaryAccessConfigDialog(
+          diary: widget.diary,
+          initialIsPublic: _isPublic,
+        );
+      },
+    );
+
+    if (config == null || !mounted) {
+      return;
+    }
+
+    try {
+      await widget.updateDiaryAccessUseCase(
+        diaryId: widget.diary.id,
+        isPublic: config.isPublic,
+        publicPassword: config.publicPassword,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.diaryVisibilityError)),
+      );
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isPublic = config.isPublic;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          config.isPublic
+              ? AppStrings.diaryPublicEnabled
+              : AppStrings.diaryPrivateEnabled,
+        ),
+      ),
+    );
+  }
+
   static DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
@@ -172,6 +234,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             dateLabel: dateLabel,
             isLoadingEntry: _isLoadingEntry,
             isPublic: _isPublic,
+            canEdit: widget.canEdit,
             contentController: _contentController,
             editorFocusNode: _editorFocusNode,
             editorScrollController: _editorScrollController,
@@ -179,11 +242,13 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             onChangeDay: _changeDay,
             onChangeMonth: _changeMonth,
             onSave: _saveContent,
+            onConfigure: widget.canEdit ? _openConfiguration : null,
           )
         : DiaryEditorDesktopLayout(
             dateLabel: dateLabel,
             isLoadingEntry: _isLoadingEntry,
             isPublic: _isPublic,
+            canEdit: widget.canEdit,
             contentController: _contentController,
             editorFocusNode: _editorFocusNode,
             editorScrollController: _editorScrollController,
@@ -191,6 +256,7 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
             onChangeDay: _changeDay,
             onChangeMonth: _changeMonth,
             onSave: _saveContent,
+            onConfigure: widget.canEdit ? _openConfiguration : null,
           );
 
     return Scaffold(
@@ -212,6 +278,204 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DiaryAccessConfigResult {
+  const _DiaryAccessConfigResult({
+    required this.isPublic,
+    this.publicPassword,
+  });
+
+  final bool isPublic;
+  final String? publicPassword;
+}
+
+class _DiaryAccessConfigDialog extends StatefulWidget {
+  const _DiaryAccessConfigDialog({
+    required this.diary,
+    required this.initialIsPublic,
+  });
+
+  final Diary diary;
+  final bool initialIsPublic;
+
+  @override
+  State<_DiaryAccessConfigDialog> createState() =>
+      _DiaryAccessConfigDialogState();
+}
+
+class _DiaryAccessConfigDialogState extends State<_DiaryAccessConfigDialog> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _publicPasswordController =
+      TextEditingController();
+  final TextEditingController _confirmPublicPasswordController =
+      TextEditingController();
+
+  bool _isPublic = false;
+  bool _showPublicPassword = false;
+  bool _showConfirmPublicPassword = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isPublic = widget.initialIsPublic;
+  }
+
+  @override
+  void dispose() {
+    _publicPasswordController.dispose();
+    _confirmPublicPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSubmit() async {
+    if (!_isPublic) {
+      Navigator.of(context)
+          .pop(const _DiaryAccessConfigResult(isPublic: false));
+      return;
+    }
+
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) {
+      return;
+    }
+
+    final publicPassword = _publicPasswordController.text.trim();
+    Navigator.of(context).pop(
+      _DiaryAccessConfigResult(
+        isPublic: true,
+        publicPassword: publicPassword,
+      ),
+    );
+  }
+
+  String? _validatePublicPassword(String? value) {
+    final trimmedValue = value?.trim() ?? '';
+    if (trimmedValue.isEmpty) {
+      return AppStrings.publicPasswordRequired;
+    }
+    if (trimmedValue.length < 4) {
+      return AppStrings.passwordMinLength;
+    }
+    if (widget.diary.hasPassword &&
+        widget.diary.matchesPassword(trimmedValue)) {
+      return AppStrings.publicPasswordMustDifferFromMaster;
+    }
+
+    return null;
+  }
+
+  String? _validateConfirmPublicPassword(String? value) {
+    final trimmedValue = value?.trim() ?? '';
+    if (trimmedValue.isEmpty) {
+      return AppStrings.publicPasswordRequired;
+    }
+    if (trimmedValue != _publicPasswordController.text.trim()) {
+      return AppStrings.passwordsDontMatch;
+    }
+
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final content = SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text('"${widget.diary.name}"'),
+            const SizedBox(height: 16),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: _isPublic,
+              title: const Text(AppStrings.publicAccessLabel),
+              subtitle: Text(
+                _isPublic
+                    ? AppStrings.publicAccessDescription
+                    : AppStrings.diaryPrivateDescription,
+              ),
+              onChanged: (bool value) {
+                setState(() {
+                  _isPublic = value;
+                });
+              },
+            ),
+            if (_isPublic) ...<Widget>[
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _publicPasswordController,
+                obscureText: !_showPublicPassword,
+                validator: _validatePublicPassword,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+                decoration: InputDecoration(
+                  labelText: AppStrings.publicDiaryPasswordLabel,
+                  hintText: AppStrings.publicDiaryPasswordHint,
+                  suffixIcon: IconButton(
+                    tooltip: _showPublicPassword
+                        ? AppStrings.hidePassword
+                        : AppStrings.showPassword,
+                    icon: Icon(
+                      _showPublicPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () => setState(
+                      () => _showPublicPassword = !_showPublicPassword,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _confirmPublicPasswordController,
+                obscureText: !_showConfirmPublicPassword,
+                validator: _validateConfirmPublicPassword,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _handleSubmit(),
+                decoration: InputDecoration(
+                  labelText: AppStrings.confirmPublicDiaryPasswordLabel,
+                  hintText: AppStrings.publicDiaryPasswordHint,
+                  suffixIcon: IconButton(
+                    tooltip: _showConfirmPublicPassword
+                        ? AppStrings.hidePassword
+                        : AppStrings.showPassword,
+                    icon: Icon(
+                      _showConfirmPublicPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () => setState(
+                      () => _showConfirmPublicPassword =
+                          !_showConfirmPublicPassword,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    return AlertDialog(
+      title: const Text(AppStrings.accessConfigurationTitle),
+      content: content,
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.cancel),
+        ),
+        FilledButton(
+          onPressed: _handleSubmit,
+          child: const Text(AppStrings.confirm),
+        ),
+      ],
     );
   }
 }
