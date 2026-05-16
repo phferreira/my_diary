@@ -264,15 +264,12 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
         centerTitle: true,
         title: Text(widget.diary.name),
       ),
-      body: SingleChildScrollView(
-        reverse: true,
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height -
-              MediaQuery.of(context).padding.top * 2,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1100),
+      body: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: SizedBox.expand(
               child: AppSurfaceCard(child: content),
             ),
           ),
