@@ -130,8 +130,7 @@ void main() {
     expect(find.text('Criar diário'), findsOneWidget);
   });
 
-  testWidgets('mantém campos de criação visíveis e opção pública desabilitada',
-      (
+  testWidgets('mantém campos de criação visíveis sem opção pública', (
     WidgetTester tester,
   ) async {
     final deps = buildDependencies();
@@ -155,11 +154,6 @@ void main() {
     expect(find.text(AppStrings.createDiaryTitle), findsOneWidget);
     expect(find.text(AppStrings.newDiaryPasswordLabel), findsOneWidget);
     expect(find.text(AppStrings.confirmPasswordLabel), findsOneWidget);
-
-    final createWithoutPassword = tester.widget<SwitchListTile>(
-      find.byType(SwitchListTile),
-    );
-    expect(createWithoutPassword.onChanged, isNull);
-    expect(createWithoutPassword.value, isFalse);
+    expect(find.byType(SwitchListTile), findsNothing);
   });
 }
