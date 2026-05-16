@@ -4,7 +4,7 @@
     {
       "name": "DEV - Flutter Web (Chrome)",
       "request": "launch",
-      "type": "dart",
+      "type": "flutter",
       "program": "${workspaceFolder}/lib/main.dart",
       "cwd": "${workspaceFolder}",
       "toolArgs": [
@@ -20,7 +20,7 @@
     {
       "name": "DEV - Flutter Mobile (Android)",
       "request": "launch",
-      "type": "dart",
+      "type": "flutter",
       "program": "${workspaceFolder}/lib/main.dart",
       "cwd": "${workspaceFolder}",
       "toolArgs": [
