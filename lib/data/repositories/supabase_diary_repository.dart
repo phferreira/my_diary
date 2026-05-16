@@ -17,7 +17,7 @@ class SupabaseDiaryRepository implements DiaryRepository {
   Future<Diary?> findByName(String query) async {
     final response = await _client
         .from(_tableName)
-        .select('id, name, content, password, is_public')
+        .select('id, name, content, password, public_password, is_public')
         .eq('name', query)
         .maybeSingle();
 
@@ -33,9 +33,14 @@ class SupabaseDiaryRepository implements DiaryRepository {
     required String name,
     required String? password,
     required bool isPublic,
+    String? publicPassword,
   }) async {
     final hashedPassword = _buildHashedPassword(
       password: password,
+      isPublic: isPublic,
+    );
+    final hashedPublicPassword = _buildHashedPublicPassword(
+      publicPassword: publicPassword,
       isPublic: isPublic,
     );
 
@@ -45,9 +50,10 @@ class SupabaseDiaryRepository implements DiaryRepository {
           'name': name,
           'content': '',
           'password': hashedPassword,
+          'public_password': hashedPublicPassword,
           'is_public': isPublic,
         })
-        .select('id, name, content, password, is_public')
+        .select('id, name, content, password, public_password, is_public')
         .single();
 
     return _toDiary(response);
@@ -97,18 +103,38 @@ class SupabaseDiaryRepository implements DiaryRepository {
     required String id,
     required bool isPublic,
     String? password,
-  }) {
+    String? publicPassword,
+  }) async {
+    final response = await _client
+        .from(_tableName)
+        .select('id, name, content, password, public_password, is_public')
+        .eq('id', id)
+        .maybeSingle();
+
+    if (response == null) {
+      return;
+    }
+
+    final diary = _toDiary(response);
     final updatedPassword = _resolveUpdatedPassword(
       isPublic: isPublic,
       password: password,
+    );
+    final updatedPublicPassword = _resolveUpdatedPublicPassword(
+      diary: diary,
+      isPublic: isPublic,
+      publicPassword: publicPassword,
     );
 
     final payload = <String, dynamic>{'is_public': isPublic};
     if (updatedPassword != _omitPasswordUpdate) {
       payload['password'] = updatedPassword;
     }
+    if (updatedPublicPassword != _omitPublicPasswordUpdate) {
+      payload['public_password'] = updatedPublicPassword;
+    }
 
-    return _client.from(_tableName).update(payload).eq('id', id);
+    await _client.from(_tableName).update(payload).eq('id', id);
   }
 
   Diary _toDiary(Map<String, dynamic> json) {
@@ -117,6 +143,7 @@ class SupabaseDiaryRepository implements DiaryRepository {
       name: json['name'] as String,
       content: (json['content'] as String?) ?? '',
       password: json['password'] as String?,
+      publicPassword: json['public_password'] as String?,
       isPublic: (json['is_public'] as bool?) ?? false,
     );
   }
@@ -125,7 +152,7 @@ class SupabaseDiaryRepository implements DiaryRepository {
     required String? password,
     required bool isPublic,
   }) {
-    if (isPublic || password == null || password.trim().isEmpty) {
+    if (password == null || password.trim().isEmpty) {
       return null;
     }
 
@@ -137,7 +164,7 @@ class SupabaseDiaryRepository implements DiaryRepository {
     required String? password,
   }) {
     if (isPublic) {
-      return null;
+      return _omitPasswordUpdate;
     }
 
     final trimmedPassword = password?.trim();
@@ -152,7 +179,51 @@ class SupabaseDiaryRepository implements DiaryRepository {
     return PasswordHasher.hash(trimmedPassword);
   }
 
+  String? _buildHashedPublicPassword({
+    required String? publicPassword,
+    required bool isPublic,
+  }) {
+    if (!isPublic || publicPassword == null || publicPassword.trim().isEmpty) {
+      return null;
+    }
+
+    return PasswordHasher.hash(publicPassword);
+  }
+
+  String? _resolveUpdatedPublicPassword({
+    required Diary diary,
+    required bool isPublic,
+    required String? publicPassword,
+  }) {
+    if (!isPublic) {
+      return null;
+    }
+
+    final trimmedPassword = publicPassword?.trim();
+    if (trimmedPassword == null || trimmedPassword.isEmpty) {
+      if (diary.publicPassword == null) {
+        throw ArgumentError(
+          'publicPassword',
+          'A senha pública é obrigatória para diário público.',
+        );
+      }
+
+      return diary.publicPassword;
+    }
+
+    if (diary.hasPassword && diary.matchesPassword(trimmedPassword)) {
+      throw ArgumentError(
+        'publicPassword',
+        'A senha pública deve ser diferente da senha mestre.',
+      );
+    }
+
+    return PasswordHasher.hash(trimmedPassword);
+  }
+
   static const String _omitPasswordUpdate = '__omit_password_update__';
+  static const String _omitPublicPasswordUpdate =
+      '__omit_public_password_update__';
 
   DateTime _parseDate(Object? value) {
     if (value is DateTime) {
