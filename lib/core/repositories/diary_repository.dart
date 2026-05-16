@@ -8,6 +8,7 @@ abstract class DiaryRepository {
     required String name,
     required String? password,
     required bool isPublic,
+    String? publicPassword,
   });
 
   Future<DiaryEntry?> findEntryByDate({
@@ -25,5 +26,6 @@ abstract class DiaryRepository {
     required String id,
     required bool isPublic,
     String? password,
+    String? publicPassword,
   });
 }
