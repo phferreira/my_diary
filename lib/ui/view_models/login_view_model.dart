@@ -15,19 +15,29 @@ class LoginViewModel {
       return const DiaryLookupResult.notFound();
     }
 
-    if (diary.isProtected) {
+    if (diary.requiresPassword) {
       return DiaryLookupResult.requiresPassword(diary);
     }
 
     return DiaryLookupResult.open(diary);
   }
 
-  Future<Diary?> unlockDiary({
+  Future<DiaryUnlockResult?> unlockDiary({
     required Diary diary,
     required String password,
   }) async {
+    if (diary.matchesPublicPassword(password.trim())) {
+      return DiaryUnlockResult(
+        diary: diary,
+        canEdit: false,
+      );
+    }
+
     if (diary.matchesPassword(password.trim())) {
-      return diary;
+      return DiaryUnlockResult(
+        diary: diary,
+        canEdit: true,
+      );
     }
 
     return null;
@@ -36,25 +46,32 @@ class LoginViewModel {
   Future<Diary> createDiary({
     required String name,
     required String? password,
-    required bool isPublic,
   }) {
-    return _createDiaryUseCase(
-      name: name,
-      password: password,
-      isPublic: isPublic,
-    );
+    return _createDiaryUseCase(name: name, password: password);
   }
+}
+
+class DiaryUnlockResult {
+  const DiaryUnlockResult({
+    required this.diary,
+    required this.canEdit,
+  });
+
+  final Diary diary;
+  final bool canEdit;
 }
 
 class DiaryLookupResult {
   const DiaryLookupResult._({this.diary, required this.status});
 
-  const DiaryLookupResult.notFound() : this._(status: DiaryLookupStatus.notFound);
+  const DiaryLookupResult.notFound()
+      : this._(status: DiaryLookupStatus.notFound);
 
   const DiaryLookupResult.requiresPassword(Diary this.diary)
       : status = DiaryLookupStatus.requiresPassword;
 
-  const DiaryLookupResult.open(Diary this.diary) : status = DiaryLookupStatus.open;
+  const DiaryLookupResult.open(Diary this.diary)
+      : status = DiaryLookupStatus.open;
 
   final Diary? diary;
   final DiaryLookupStatus status;
