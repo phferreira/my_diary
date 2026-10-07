@@ -8,6 +8,7 @@ class Diary {
     this.password,
     this.publicPassword,
     this.isPublic = false,
+    this.accessRequired = false,
   });
 
   final String id;
@@ -16,12 +17,14 @@ class Diary {
   final String? password;
   final String? publicPassword;
   final bool isPublic;
+  final bool accessRequired;
 
   bool get hasPassword => password?.isNotEmpty ?? false;
 
   bool get hasPublicPassword => publicPassword?.isNotEmpty ?? false;
 
-  bool get requiresPassword => hasPassword || hasPublicPassword;
+  bool get requiresPassword =>
+      accessRequired || hasPassword || hasPublicPassword;
 
   bool get isProtected => !isPublic && hasPassword;
 
@@ -61,6 +64,7 @@ class Diary {
     Object? password = _noChange,
     Object? publicPassword = _noChange,
     bool? isPublic,
+    bool? accessRequired,
   }) {
     return Diary(
       id: id ?? this.id,
@@ -71,6 +75,7 @@ class Diary {
           ? this.publicPassword
           : publicPassword as String?,
       isPublic: isPublic ?? this.isPublic,
+      accessRequired: accessRequired ?? this.accessRequired,
     );
   }
 

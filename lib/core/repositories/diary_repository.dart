@@ -1,7 +1,13 @@
 import 'package:my_diary/core/entities/diary.dart';
+import 'package:my_diary/core/entities/diary_access.dart';
 import 'package:my_diary/core/entities/diary_entry.dart';
 
 abstract class DiaryRepository {
+  Future<DiaryAccess?> unlockDiary({
+    required Diary diary,
+    required String password,
+  });
+
   Future<Diary?> findByName(String query);
 
   Future<Diary> createDiary({

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: complete
 title: Flutter Dio client and repository adapter
 type: frontend
 complexity: high
@@ -25,9 +25,9 @@ Add a transport boundary in Flutter's data layer so repository behavior can use 
 
 ## Subtasks
 
-- [ ] 2.1 Define transport abstraction and concrete Dio implementation with base URL validation, timeouts, serialization, and error conversion.
-- [ ] 2.2 Map API DTOs to core entities and implement `DiaryRepository`, including token retention and unlock outcomes.
-- [ ] 2.3 Verify repository request/mapping/error behavior using fake transport at the network boundary.
+- [x] 2.1 Define transport abstraction and concrete Dio implementation with base URL validation, timeouts, serialization, and error conversion.
+- [x] 2.2 Map API DTOs to core entities and implement `DiaryRepository`, including token retention and unlock outcomes.
+- [x] 2.3 Verify repository request/mapping/error behavior using fake transport at the network boundary.
 
 ## Implementation Details
 

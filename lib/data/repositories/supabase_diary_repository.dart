@@ -1,5 +1,6 @@
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/entities/diary_entry.dart';
+import 'package:my_diary/core/entities/diary_access.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
 import 'package:my_diary/core/security/password_hasher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -26,6 +27,20 @@ class SupabaseDiaryRepository implements DiaryRepository {
     }
 
     return _toDiary(response);
+  }
+
+  @override
+  Future<DiaryAccess?> unlockDiary({
+    required Diary diary,
+    required String password,
+  }) async {
+    if (diary.matchesPublicPassword(password.trim())) {
+      return DiaryAccess(diaryId: diary.id, canEdit: false);
+    }
+    if (diary.matchesPassword(password.trim())) {
+      return DiaryAccess(diaryId: diary.id, canEdit: true);
+    }
+    return null;
   }
 
   @override

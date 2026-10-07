@@ -1,5 +1,6 @@
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/entities/diary_entry.dart';
+import 'package:my_diary/core/entities/diary_access.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
 import 'package:my_diary/core/security/password_hasher.dart';
 
@@ -43,6 +44,23 @@ class InMemoryDiaryRepository implements DiaryRepository {
       }
     }
 
+    return null;
+  }
+
+  @override
+  Future<DiaryAccess?> unlockDiary({
+    required Diary diary,
+    required String password,
+  }) async {
+    final stored = _diaries.where((item) => item.id == diary.id);
+    if (stored.isEmpty) return null;
+    final current = stored.first;
+    if (current.matchesPublicPassword(password.trim())) {
+      return DiaryAccess(diaryId: current.id, canEdit: false);
+    }
+    if (current.matchesPassword(password.trim())) {
+      return DiaryAccess(diaryId: current.id, canEdit: true);
+    }
     return null;
   }
 
