@@ -19,20 +19,17 @@ void main() {
 
       expect(updatedDiary, isNotNull);
       expect(updatedDiary!.isPublic, isFalse);
-      expect(updatedDiary.password, isNotNull);
-      expect(updatedDiary.publicPassword, isNull);
+      expect(updatedDiary.accessRequired, isTrue);
     });
 
     test('define diário como público com senha separada da mestre', () async {
       final repository = InMemoryDiaryRepository(
         seedDiaries: const <Diary>[
-          Diary(
-            id: '1',
-            name: 'Diario',
-            content: '',
-            password: 'hash',
-          ),
+          Diary(id: '1', name: 'Diario', content: '', accessRequired: true),
         ],
+        seedCredentials: const {
+          '1': InMemoryDiaryCredentials(masterPassword: 'mestre'),
+        },
       );
       final useCase = UpdateDiaryAccessUseCase(repository);
 
@@ -46,20 +43,17 @@ void main() {
 
       expect(updatedDiary, isNotNull);
       expect(updatedDiary!.isPublic, isTrue);
-      expect(updatedDiary.password, isNotNull);
-      expect(updatedDiary.publicPassword, isNotNull);
+      expect(updatedDiary.accessRequired, isTrue);
     });
 
     test('não aceita senha pública igual à senha mestre', () async {
       final repository = InMemoryDiaryRepository(
         seedDiaries: const <Diary>[
-          Diary(
-            id: '1',
-            name: 'Diario',
-            content: '',
-            password: 'hash',
-          ),
+          Diary(id: '1', name: 'Diario', content: '', accessRequired: true),
         ],
+        seedCredentials: const {
+          '1': InMemoryDiaryCredentials(masterPassword: 'mestre'),
+        },
       );
       final useCase = UpdateDiaryAccessUseCase(repository);
 
@@ -67,7 +61,7 @@ void main() {
         () => useCase(
           diaryId: '1',
           isPublic: true,
-          publicPassword: 'hash',
+          publicPassword: 'mestre',
         ),
         throwsArgumentError,
       );

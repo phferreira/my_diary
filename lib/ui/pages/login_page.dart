@@ -18,6 +18,7 @@ class LoginPage extends StatefulWidget {
     required this.saveDiaryEntryUseCase,
     required this.updateDiaryAccessUseCase,
     this.appVersion,
+    this.configurationMessage,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class LoginPage extends StatefulWidget {
   final SaveDiaryEntryUseCase saveDiaryEntryUseCase;
   final UpdateDiaryAccessUseCase updateDiaryAccessUseCase;
   final String? appVersion;
+  final String? configurationMessage;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -75,10 +77,17 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final result = await widget.viewModel.findDiary(_queryController.text);
-    if (!mounted) {
+    late final DiaryLookupResult result;
+    try {
+      result = await widget.viewModel.findDiary(_queryController.text);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.backendRequestFailed)),
+      );
       return;
     }
+    if (!mounted) return;
 
     switch (result.status) {
       case DiaryLookupStatus.open:
@@ -143,14 +152,20 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final unlockedDiary = await widget.viewModel.unlockDiary(
-      diary: diary,
-      password: password,
-    );
-
-    if (!mounted) {
+    DiaryUnlockResult? unlockedDiary;
+    try {
+      unlockedDiary = await widget.viewModel.unlockDiary(
+        diary: diary,
+        password: password,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.backendRequestFailed)),
+      );
       return;
     }
+    if (!mounted) return;
 
     if (unlockedDiary == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,6 +218,16 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
+                      if (widget.configurationMessage != null) ...<Widget>[
+                        Text(
+                          widget.configurationMessage!,
+                          key: const Key('backend-configuration-error'),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       Text(
                         AppStrings.appName,
                         style: Theme.of(context).textTheme.headlineSmall,
@@ -285,12 +310,14 @@ class _CreateDiaryDialogState extends State<_CreateDiaryDialog> {
       return;
     }
 
-    final diary = await widget.onCreate(
-      password: _passwordController.text.trim(),
-    );
-    if (!mounted) {
+    late final Diary diary;
+    try {
+      diary = await widget.onCreate(password: _passwordController.text.trim());
+    } catch (_) {
+      if (mounted) setState(() => _error = AppStrings.backendRequestFailed);
       return;
     }
+    if (!mounted) return;
 
     Navigator.of(context).pop(diary);
   }

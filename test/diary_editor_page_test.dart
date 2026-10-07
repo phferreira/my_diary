@@ -26,6 +26,24 @@ void main() {
     );
   }
 
+  testWidgets('mantém texto visível quando o backend rejeita o salvamento',
+      (WidgetTester tester) async {
+    final repository = _FailingSaveRepository();
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: FlutterQuillLocalizations.localizationsDelegates,
+      supportedLocales: FlutterQuillLocalizations.supportedLocales,
+      home: buildSubject(repository: repository),
+    ));
+    await tester.pumpAndSettle();
+    final editor = tester.widget<QuillEditor>(find.byType(QuillEditor));
+    editor.controller.document.insert(0, 'rascunho local');
+    await tester.tap(find.text(AppStrings.save));
+    await tester.pumpAndSettle();
+    expect(find.text(AppStrings.entrySaveFailed), findsOneWidget);
+    expect(
+        editor.controller.document.toPlainText(), contains('rascunho local'));
+  });
+
   testWidgets('exibe data inicial configurada', (WidgetTester tester) async {
     final repository = InMemoryDiaryRepository();
     final initialDate = DateTime(2026, 3, 16, 18, 45);
@@ -133,16 +151,37 @@ void main() {
     expect(find.text(AppStrings.configuration), findsOneWidget);
   });
 
+  testWidgets('mostra erro quando o backend rejeita a configuração de acesso',
+      (WidgetTester tester) async {
+    final repository = _FailingAccessUpdateRepository();
+    const diary = Diary(id: '1', name: 'Diario', content: 'rascunho');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates:
+            FlutterQuillLocalizations.localizationsDelegates,
+        supportedLocales: FlutterQuillLocalizations.supportedLocales,
+        home: buildSubject(repository: repository, diary: diary),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppStrings.configuration));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppStrings.confirm));
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.diaryVisibilityError), findsOneWidget);
+    expect(find.byType(DiaryEditorPage), findsOneWidget);
+  });
+
   testWidgets('abre diário público em modo somente leitura',
       (WidgetTester tester) async {
     final repository = InMemoryDiaryRepository(
       seedDiaries: <Diary>[
-        Diary(
+        const Diary(
           id: '1',
           name: 'Diario',
           content: '',
-          password: 'hash',
-          publicPassword: 'publica',
           isPublic: true,
         ),
       ],
@@ -159,8 +198,6 @@ void main() {
             id: '1',
             name: 'Diario',
             content: '',
-            password: 'hash',
-            publicPassword: 'publica',
             isPublic: true,
           ),
           canEdit: false,
@@ -177,4 +214,25 @@ void main() {
     expect(find.text(AppStrings.configuration), findsNothing);
     expect(find.byType(QuillSimpleToolbar), findsNothing);
   });
+}
+
+class _FailingAccessUpdateRepository extends InMemoryDiaryRepository {
+  @override
+  Future<void> updateDiaryAccess({
+    required String id,
+    required bool isPublic,
+    String? password,
+    String? publicPassword,
+  }) async =>
+      throw StateError('backend unavailable');
+}
+
+class _FailingSaveRepository extends InMemoryDiaryRepository {
+  @override
+  Future<void> upsertDiaryEntry(
+      {required String diaryId,
+      required DateTime date,
+      required String content}) async {
+    throw StateError('backend save failed');
+  }
 }

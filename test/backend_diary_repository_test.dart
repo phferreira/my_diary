@@ -24,8 +24,6 @@ void main() {
       expect(api.lastBody, {'name': 'Leituras'});
       expect(diary?.name, 'Leituras');
       expect(diary?.accessRequired, isTrue);
-      expect(diary?.password, isNull);
-      expect(diary?.publicPassword, isNull);
     });
 
     test(

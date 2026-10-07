@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_diary/core/constants/app_strings.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
+import 'package:my_diary/core/usecases/unlock_diary_use_case.dart';
 import 'package:my_diary/core/usecases/load_diary_entry_use_case.dart';
 import 'package:my_diary/core/usecases/save_diary_entry_use_case.dart';
 import 'package:my_diary/core/usecases/update_diary_access_use_case.dart';
@@ -18,6 +19,7 @@ void main() {
     final viewModel = LoginViewModel(
       FindDiaryUseCase(repository),
       CreateDiaryUseCase(repository),
+      UnlockDiaryUseCase(repository),
     );
 
     await tester.pumpWidget(

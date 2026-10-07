@@ -68,15 +68,21 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
       return;
     }
 
-    await widget.saveDiaryEntryUseCase(
-      diaryId: widget.diary.id,
-      date: _selectedDate,
-      content: jsonEncode(_contentController.document.toDelta().toJson()),
-    );
-
-    if (!mounted) {
+    try {
+      await widget.saveDiaryEntryUseCase(
+        diaryId: widget.diary.id,
+        date: _selectedDate,
+        content: jsonEncode(_contentController.document.toDelta().toJson()),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.entrySaveFailed)),
+      );
       return;
     }
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(AppStrings.contentSaved)),
@@ -85,22 +91,30 @@ class _DiaryEditorPageState extends State<DiaryEditorPage> {
 
   Future<void> _loadEntryForDate(DateTime date) async {
     final normalizedDate = _normalizeDate(date);
+    final previousDate = _selectedDate;
     setState(() {
       _isLoadingEntry = true;
       _selectedDate = normalizedDate;
     });
 
-    final entry = await widget.loadDiaryEntryUseCase(
-      diaryId: widget.diary.id,
-      date: normalizedDate,
-    );
-
-    if (!mounted) {
-      return;
+    try {
+      final entry = await widget.loadDiaryEntryUseCase(
+        diaryId: widget.diary.id,
+        date: normalizedDate,
+      );
+      if (!mounted) return;
+      _contentController.document = _loadDocument(entry?.content ?? '');
+      setState(() => _isLoadingEntry = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _selectedDate = previousDate;
+        _isLoadingEntry = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.entryLoadFailed)),
+      );
     }
-
-    _contentController.document = _loadDocument(entry?.content ?? '');
-    setState(() => _isLoadingEntry = false);
   }
 
   Future<void> _selectDate() async {
@@ -356,11 +370,6 @@ class _DiaryAccessConfigDialogState extends State<_DiaryAccessConfigDialog> {
     if (trimmedValue.length < 4) {
       return AppStrings.passwordMinLength;
     }
-    if (widget.diary.hasPassword &&
-        widget.diary.matchesPassword(trimmedValue)) {
-      return AppStrings.publicPasswordMustDifferFromMaster;
-    }
-
     return null;
   }
 

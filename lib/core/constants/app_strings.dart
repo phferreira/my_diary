@@ -35,8 +35,6 @@ class AppStrings {
   static const String publicDiaryPasswordHint = 'Escolha uma senha pública';
   static const String confirmPublicDiaryPasswordLabel =
       'Confirme a senha pública';
-  static const String publicPasswordMustDifferFromMaster =
-      'A senha pública deve ser diferente da senha mestre';
   static const String publicPasswordRequired = 'Informe uma senha pública';
   static const String diaryEditorContentLabel = 'Conteúdo do diário';
   static const String diaryEditorContentHint = 'Escreva aqui...';
@@ -54,4 +52,12 @@ class AppStrings {
   static const String nextMonth = 'Próximo mês';
   static const String save = 'Salvar';
   static const String contentSaved = 'Conteúdo salvo com sucesso';
+  static const String backendConfigurationMissing =
+      'Configure BACKEND_BASE_URL para conectar ao serviço de diários.';
+  static const String backendRequestFailed =
+      'Não foi possível comunicar com o serviço. Tente novamente.';
+  static const String entryLoadFailed =
+      'Não foi possível carregar esta entrada.';
+  static const String entrySaveFailed =
+      'Não foi possível salvar. Seu texto continua disponível para tentar novamente.';
 }

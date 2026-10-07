@@ -1,39 +1,49 @@
 import 'package:my_diary/core/entities/diary.dart';
-import 'package:my_diary/core/entities/diary_entry.dart';
 import 'package:my_diary/core/entities/diary_access.dart';
+import 'package:my_diary/core/entities/diary_entry.dart';
 import 'package:my_diary/core/repositories/diary_repository.dart';
-import 'package:my_diary/core/security/password_hasher.dart';
+
+class InMemoryDiaryCredentials {
+  const InMemoryDiaryCredentials({this.masterPassword, this.publicPassword});
+  final String? masterPassword;
+  final String? publicPassword;
+}
 
 class InMemoryDiaryRepository implements DiaryRepository {
-  InMemoryDiaryRepository({List<Diary>? seedDiaries})
-      : _diaries = List<Diary>.from(
-          seedDiaries ??
-              <Diary>[
-                const Diary(
-                  id: '1',
-                  name: 'Viagem 2026',
-                  content: 'Planejar roteiro da viagem pela Europa.',
-                  isPublic: true,
-                ),
-                Diary(
-                  id: '2',
-                  name: 'Trabalho',
-                  content: 'Resumo da semana e próximos objetivos.',
-                  password: PasswordHasher.hash('1234'),
-                ),
-                Diary(
-                  id: '3',
-                  name: 'Diario Pessoal',
-                  content: 'Reflexões diárias.',
-                  password: PasswordHasher.hash('segredo'),
-                ),
-              ],
-        ),
+  InMemoryDiaryRepository(
+      {List<Diary>? seedDiaries,
+      Map<String, InMemoryDiaryCredentials>? seedCredentials})
+      : _diaries = List<Diary>.from(seedDiaries ?? _defaultDiaries),
+        _credentials = Map<String, InMemoryDiaryCredentials>.from(
+            seedCredentials ?? _defaultCredentials),
         _entries = <String, Map<String, DiaryEntry>>{} {
     _seedEntriesFromDiaries();
   }
 
+  static final List<Diary> _defaultDiaries = <Diary>[
+    const Diary(
+        id: '1',
+        name: 'Viagem 2026',
+        content: 'Planejar roteiro da viagem pela Europa.',
+        isPublic: true),
+    const Diary(
+        id: '2',
+        name: 'Trabalho',
+        content: 'Resumo da semana e próximos objetivos.',
+        accessRequired: true),
+    const Diary(
+        id: '3',
+        name: 'Diario Pessoal',
+        content: 'Reflexões diárias.',
+        accessRequired: true),
+  ];
+  static const Map<String, InMemoryDiaryCredentials> _defaultCredentials = {
+    '2': InMemoryDiaryCredentials(masterPassword: '1234'),
+    '3': InMemoryDiaryCredentials(masterPassword: 'segredo'),
+  };
+
   final List<Diary> _diaries;
+  final Map<String, InMemoryDiaryCredentials> _credentials;
   final Map<String, Map<String, DiaryEntry>> _entries;
 
   @override
@@ -43,214 +53,116 @@ class InMemoryDiaryRepository implements DiaryRepository {
         return diary;
       }
     }
-
     return null;
   }
 
   @override
-  Future<DiaryAccess?> unlockDiary({
-    required Diary diary,
-    required String password,
-  }) async {
-    final stored = _diaries.where((item) => item.id == diary.id);
-    if (stored.isEmpty) return null;
-    final current = stored.first;
-    if (current.matchesPublicPassword(password.trim())) {
-      return DiaryAccess(diaryId: current.id, canEdit: false);
-    }
-    if (current.matchesPassword(password.trim())) {
+  Future<DiaryAccess?> unlockDiary(
+      {required Diary diary, required String password}) async {
+    final index = _diaries.indexWhere((item) => item.id == diary.id);
+    if (index == -1) return null;
+    final current = _diaries[index];
+    final credentials = _credentials[current.id];
+    if (credentials?.masterPassword == password.trim()) {
       return DiaryAccess(diaryId: current.id, canEdit: true);
     }
+    if (current.isPublic && credentials?.publicPassword == password.trim()) {
+      return DiaryAccess(diaryId: current.id, canEdit: false);
+    }
     return null;
   }
 
   @override
-  Future<Diary> createDiary({
-    required String name,
-    required String? password,
-    required bool isPublic,
-    String? publicPassword,
-  }) async {
-    final hashedPassword = _buildHashedPassword(
-      password: password,
-      isPublic: isPublic,
-    );
-    final hashedPublicPassword = _buildHashedPublicPassword(
-      publicPassword: publicPassword,
-      isPublic: isPublic,
-    );
-
+  Future<Diary> createDiary(
+      {required String name,
+      required String? password,
+      required bool isPublic,
+      String? publicPassword}) async {
+    final master = _normalizeCredential(password);
+    final public = isPublic ? _normalizeCredential(publicPassword) : null;
+    _validateAccess(isPublic, master, public);
     final diary = Diary(
-      id: (_diaries.length + 1).toString(),
-      name: name,
-      content: '',
-      password: hashedPassword,
-      publicPassword: hashedPublicPassword,
-      isPublic: isPublic,
-    );
+        id: (_diaries.length + 1).toString(),
+        name: name,
+        content: '',
+        isPublic: isPublic,
+        accessRequired: master != null || public != null);
     _diaries.add(diary);
+    _credentials[diary.id] = InMemoryDiaryCredentials(
+        masterPassword: master, publicPassword: public);
     return diary;
   }
 
   @override
-  Future<DiaryEntry?> findEntryByDate({
-    required String diaryId,
-    required DateTime date,
-  }) async {
-    final diaryEntries = _entries[diaryId];
-    if (diaryEntries == null) {
-      return null;
-    }
-
-    return diaryEntries[_dateKey(date)];
-  }
+  Future<DiaryEntry?> findEntryByDate(
+          {required String diaryId, required DateTime date}) async =>
+      _entries[diaryId]?[_dateKey(date)];
 
   @override
-  Future<void> upsertDiaryEntry({
-    required String diaryId,
-    required DateTime date,
-    required String content,
-  }) async {
+  Future<void> upsertDiaryEntry(
+      {required String diaryId,
+      required DateTime date,
+      required String content}) async {
     final normalizedDate = _normalizeDate(date);
-    final diaryEntries = _entries.putIfAbsent(
-      diaryId,
-      () => <String, DiaryEntry>{},
-    );
-
-    diaryEntries[_dateKey(normalizedDate)] = DiaryEntry(
-      diaryId: diaryId,
-      date: normalizedDate,
-      content: content,
-    );
+    final diaryEntries =
+        _entries.putIfAbsent(diaryId, () => <String, DiaryEntry>{});
+    diaryEntries[_dateKey(normalizedDate)] =
+        DiaryEntry(diaryId: diaryId, date: normalizedDate, content: content);
   }
 
   @override
-  Future<void> updateDiaryAccess({
-    required String id,
-    required bool isPublic,
-    String? password,
-    String? publicPassword,
-  }) async {
-    final index = _diaries.indexWhere((Diary diary) => diary.id == id);
-    if (index == -1) {
-      return;
-    }
-
-    final currentDiary = _diaries[index];
-    final updatedPassword = _resolveUpdatedPassword(
-      diary: currentDiary,
-      isPublic: isPublic,
-      password: password,
-    );
-    final updatedPublicPassword = _resolveUpdatedPublicPassword(
-      diary: currentDiary,
-      isPublic: isPublic,
-      publicPassword: publicPassword,
-    );
-
-    _diaries[index] = _diaries[index].copyWith(
-      isPublic: isPublic,
-      password: updatedPassword,
-      publicPassword: updatedPublicPassword,
-    );
+  Future<void> updateDiaryAccess(
+      {required String id,
+      required bool isPublic,
+      String? password,
+      String? publicPassword}) async {
+    final index = _diaries.indexWhere((diary) => diary.id == id);
+    if (index == -1) return;
+    final current = _diaries[index];
+    final existing = _credentials[id] ?? const InMemoryDiaryCredentials();
+    final master = password == null
+        ? existing.masterPassword
+        : _normalizeCredential(password);
+    final public = !isPublic
+        ? null
+        : publicPassword == null
+            ? existing.publicPassword
+            : _normalizeCredential(publicPassword);
+    _validateAccess(isPublic, master, public);
+    _credentials[id] = InMemoryDiaryCredentials(
+        masterPassword: master, publicPassword: public);
+    _diaries[index] = current.copyWith(
+        isPublic: isPublic, accessRequired: master != null || public != null);
   }
 
-  String? _buildHashedPassword({
-    required String? password,
-    required bool isPublic,
-  }) {
-    if (password == null || password.trim().isEmpty) {
-      return null;
-    }
-
-    return PasswordHasher.hash(password);
+  static String? _normalizeCredential(String? value) {
+    final normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
   }
 
-  String? _resolveUpdatedPassword({
-    required Diary diary,
-    required bool isPublic,
-    required String? password,
-  }) {
-    if (isPublic) {
-      return diary.password;
+  static void _validateAccess(bool isPublic, String? master, String? public) {
+    if (isPublic && public == null) {
+      throw ArgumentError('A public password is required.');
     }
-
-    final trimmedPassword = password?.trim();
-    if (trimmedPassword != null && trimmedPassword.isNotEmpty) {
-      return PasswordHasher.hash(trimmedPassword);
+    if (isPublic && master != null && master == public) {
+      throw ArgumentError('Public and master passwords must differ.');
     }
-
-    return diary.password;
-  }
-
-  String? _buildHashedPublicPassword({
-    required String? publicPassword,
-    required bool isPublic,
-  }) {
-    if (!isPublic || publicPassword == null || publicPassword.trim().isEmpty) {
-      return null;
-    }
-
-    return PasswordHasher.hash(publicPassword);
-  }
-
-  String? _resolveUpdatedPublicPassword({
-    required Diary diary,
-    required bool isPublic,
-    required String? publicPassword,
-  }) {
-    if (!isPublic) {
-      return null;
-    }
-
-    final trimmedPassword = publicPassword?.trim();
-    if (trimmedPassword == null || trimmedPassword.isEmpty) {
-      if (diary.publicPassword == null) {
-        throw ArgumentError(
-          'publicPassword',
-          'A senha pública é obrigatória para diário público.',
-        );
-      }
-
-      return diary.publicPassword;
-    }
-
-    if (diary.hasPassword && diary.matchesPassword(trimmedPassword)) {
-      throw ArgumentError(
-        'publicPassword',
-        'A senha pública deve ser diferente da senha mestre.',
-      );
-    }
-
-    return PasswordHasher.hash(trimmedPassword);
   }
 
   void _seedEntriesFromDiaries() {
     final today = _normalizeDate(DateTime.now());
     final todayKey = _dateKey(today);
-
     for (final diary in _diaries) {
-      if (diary.content.trim().isEmpty) {
-        continue;
-      }
-
-      final diaryEntries = _entries.putIfAbsent(
-        diary.id,
-        () => <String, DiaryEntry>{},
-      );
-      diaryEntries[todayKey] = DiaryEntry(
-        diaryId: diary.id,
-        date: today,
-        content: diary.content,
-      );
+      if (diary.content.trim().isEmpty) continue;
+      final diaryEntries =
+          _entries.putIfAbsent(diary.id, () => <String, DiaryEntry>{});
+      diaryEntries[todayKey] =
+          DiaryEntry(diaryId: diary.id, date: today, content: diary.content);
     }
   }
 
-  static DateTime _normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
-  }
-
-  static String _dateKey(DateTime date) {
-    return date.toIso8601String().split('T').first;
-  }
+  static DateTime _normalizeDate(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+  static String _dateKey(DateTime date) =>
+      date.toIso8601String().split('T').first;
 }
