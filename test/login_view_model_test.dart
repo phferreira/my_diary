@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
-import 'package:my_diary/core/security/password_hasher.dart';
+import 'package:my_diary/core/usecases/unlock_diary_use_case.dart';
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/data/repositories/in_memory_diary_repository.dart';
 import 'package:my_diary/ui/view_models/login_view_model.dart';
@@ -16,6 +16,7 @@ void main() {
       viewModel = LoginViewModel(
         FindDiaryUseCase(repository),
         CreateDiaryUseCase(repository),
+        UnlockDiaryUseCase(repository),
       );
     });
 
@@ -57,19 +58,23 @@ void main() {
     test('desbloqueia diário público em modo somente leitura', () async {
       final publicRepository = InMemoryDiaryRepository(
         seedDiaries: <Diary>[
-          Diary(
+          const Diary(
             id: '1',
             name: 'Leitura',
             content: '',
-            password: PasswordHasher.hash('mestre'),
-            publicPassword: PasswordHasher.hash('publica'),
             isPublic: true,
+            accessRequired: true,
           ),
         ],
+        seedCredentials: const {
+          '1': InMemoryDiaryCredentials(
+              masterPassword: 'mestre', publicPassword: 'publica'),
+        },
       );
       final publicViewModel = LoginViewModel(
         FindDiaryUseCase(publicRepository),
         CreateDiaryUseCase(publicRepository),
+        UnlockDiaryUseCase(publicRepository),
       );
 
       final result = await publicViewModel.findDiary('Leitura');
@@ -93,8 +98,11 @@ void main() {
         password: 'minhaSenha',
       );
 
-      expect(diary.password, isNot('minhaSenha'));
-      expect(diary.matchesPassword('minhaSenha'), isTrue);
+      expect(diary.accessRequired, isTrue);
+      expect(diary.toString(), isNot(contains('minhaSenha')));
+      final access =
+          await repository.unlockDiary(diary: diary, password: 'minhaSenha');
+      expect(access?.canEdit, isTrue);
       expect(diary.isPublic, isFalse);
     });
   });

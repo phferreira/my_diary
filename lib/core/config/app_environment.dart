@@ -3,14 +3,5 @@ class AppEnvironment {
 
   static const String backendBaseUrl =
       String.fromEnvironment('BACKEND_BASE_URL');
-
-  static bool get hasBackendConfig => backendBaseUrl.isNotEmpty;
-
-  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const String supabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
-  );
-
-  static bool get hasSupabaseConfig =>
-      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+  static bool get hasBackendConfig => backendBaseUrl.trim().isNotEmpty;
 }

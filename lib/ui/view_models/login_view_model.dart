@@ -1,12 +1,15 @@
 import 'package:my_diary/core/entities/diary.dart';
 import 'package:my_diary/core/usecases/create_diary_use_case.dart';
 import 'package:my_diary/core/usecases/find_diary_use_case.dart';
+import 'package:my_diary/core/usecases/unlock_diary_use_case.dart';
 
 class LoginViewModel {
-  LoginViewModel(this._findDiaryUseCase, this._createDiaryUseCase);
+  LoginViewModel(this._findDiaryUseCase, this._createDiaryUseCase,
+      this._unlockDiaryUseCase);
 
   final FindDiaryUseCase _findDiaryUseCase;
   final CreateDiaryUseCase _createDiaryUseCase;
+  final UnlockDiaryUseCase _unlockDiaryUseCase;
 
   Future<DiaryLookupResult> findDiary(String rawQuery) async {
     final diary = await _findDiaryUseCase(rawQuery);
@@ -26,21 +29,9 @@ class LoginViewModel {
     required Diary diary,
     required String password,
   }) async {
-    if (diary.matchesPublicPassword(password.trim())) {
-      return DiaryUnlockResult(
-        diary: diary,
-        canEdit: false,
-      );
-    }
-
-    if (diary.matchesPassword(password.trim())) {
-      return DiaryUnlockResult(
-        diary: diary,
-        canEdit: true,
-      );
-    }
-
-    return null;
+    final access = await _unlockDiaryUseCase(diary: diary, password: password);
+    if (access == null) return null;
+    return DiaryUnlockResult(diary: diary, canEdit: access.canEdit);
   }
 
   Future<Diary> createDiary({

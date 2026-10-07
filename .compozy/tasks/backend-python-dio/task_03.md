@@ -1,5 +1,5 @@
 ---
-status: pending
+status: in_progress
 title: Wire backend workflows and remove Supabase runtime
 type: feature
 complexity: high
