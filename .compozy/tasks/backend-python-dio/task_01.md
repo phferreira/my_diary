@@ -1,5 +1,5 @@
 ---
-status: complete
+status: completed
 title: Python API, PostgreSQL, and access policy
 type: backend
 complexity: high

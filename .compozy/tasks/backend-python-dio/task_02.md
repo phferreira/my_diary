@@ -1,5 +1,5 @@
 ---
-status: complete
+status: completed
 title: Flutter Dio client and repository adapter
 type: frontend
 complexity: high

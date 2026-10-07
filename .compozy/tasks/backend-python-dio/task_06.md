@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: QA plan and session charters
 type: qa-report
 complexity: medium
