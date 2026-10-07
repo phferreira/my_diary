@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Build the repeatable legacy data importer
 type: backend
 complexity: high

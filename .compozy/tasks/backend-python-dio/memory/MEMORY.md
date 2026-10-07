@@ -4,6 +4,7 @@
 
 - The Python backend is maintained as a separate local Git repository at `../../node/my_diary_bk`; configure its remote before publishing.
 - The backend owns PostgreSQL state, password verification, and short-lived scoped access tokens. Flutter receives safe diary metadata and opaque tokens only.
+- The importer uses a dedicated stable `LEGACY_IMPORT_FINGERPRINT_KEY`, separate from the API token signing key, to preserve rerun idempotency after legacy credential upgrades.
 
 ## Shared Learnings
 
@@ -15,4 +16,3 @@
 - Existing Supabase records still require an operator export and reconciliation before Supabase can be retired (task 05).
 
 ## Open Questions
-
