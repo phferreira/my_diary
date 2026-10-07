@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Real-user and API journey QA
 type: qa-execution
 complexity: high
