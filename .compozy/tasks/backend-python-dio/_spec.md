@@ -220,7 +220,7 @@ No plugin, extension, hook, agent tool, MCP, or third-party runtime surface is a
 
 ### Agent Manageability Plan
 
-Operators run a deterministic importer over a local JSON/CSV export or extracted PostgreSQL dump, with dry-run and explicit apply modes. It reports source/imported/updated/skipped counts and row-numbered diagnostics, exits nonzero on invalid data or incomplete application, and supports duplicate-safe reruns. Backend health/readiness reports service and PostgreSQL readiness without secrets. Freeze exact CLI syntax in the backend implementation contract before task execution.
+Operators run a deterministic importer over a local JSON/CSV export or extracted PostgreSQL dump, with dry-run and explicit apply modes. It reports total/imported/already-present/rejected counts and row-numbered diagnostics, exits nonzero on invalid data or incomplete application, and supports duplicate-safe reruns. Backend health/readiness reports service and PostgreSQL readiness without secrets. Freeze exact CLI syntax in the backend implementation contract before task execution.
 
 ### Config Lifecycle
 
@@ -228,6 +228,7 @@ Operators run a deterministic importer over a local JSON/CSV export or extracted
 - Backend `DATABASE_URL`: required runtime secret, never sent to client.
 - Backend `TOKEN_SIGNING_KEY`: required runtime secret with rotation procedure, never committed or sent to browser.
 - Backend `ALLOWED_ORIGINS`: explicit production origin list.
+- Backend `LEGACY_IMPORT_FINGERPRINT_KEY`: importer-only stable secret of at least 32 characters, required for repeat imports after legacy verifier upgrades; separate from `TOKEN_SIGNING_KEY` and retained unchanged across its rotation.
 - Token TTL defaults to 15 minutes. Hash parameters use documented secure defaults; only backend operator configuration may override them.
 
 ### Testing Approach
@@ -311,6 +312,7 @@ Log request ID, route, status, latency and safe error code; never log passwords,
 - Import source is operator-provided CSV/JSON or extracted PostgreSQL dump; importer has no Supabase SDK dependency.
 - Legacy hashes remain verifiable until successful authentication upgrades them.
 - `BACKEND_BASE_URL`, `DATABASE_URL`, signing key and allowed origins are deployment contracts; exact host/platform are deployment choices.
+- `LEGACY_IMPORT_FINGERPRINT_KEY` is provisioned only for the offline importer and remains stable while imported snapshots may be re-applied.
 
 ### Architecture Decision Records
 
