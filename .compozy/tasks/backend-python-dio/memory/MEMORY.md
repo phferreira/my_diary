@@ -13,6 +13,6 @@
 ## Open Risks
 
 - The backend repository currently has no remote, so its local commit is not published.
-- Existing Supabase records still require an operator export and reconciliation before Supabase can be retired (task 05).
+- Production diary records still require an authorized, consistent operator export and reconciliation before source retirement; only synthetic fixture data is available (task 05).
 
 ## Open Questions

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 title: Reconcile migrated data and retire Supabase setup
 type: feature
 complexity: critical
