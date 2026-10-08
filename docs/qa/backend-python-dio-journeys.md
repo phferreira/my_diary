@@ -11,7 +11,7 @@ This charter owns the remaining real app/API journeys for task 07. Run against a
 
 ## E2E-001 — Protected diary create, unlock, and dated save
 
-1. Start an isolated PostgreSQL database and the API with a valid signing key and the Flutter web app with `BACKEND_BASE_URL` pointed at that API.
+1. Start an isolated PostgreSQL database and the API with a valid signing key and the Flutter web app with `API_BASE_URL` pointed at that API.
 2. In a fresh browser context, create a diary with a unique name and master password. Confirm the app enters the diary only after the API confirms creation.
 3. Reload, find the diary by exact name, unlock with its master password, open a date, enter unique content, and save.
 4. Reload the date and confirm the content persists. Query the disposable database to confirm one diary and one row for the selected diary/date; do not expose password verifiers in captured output.
@@ -30,7 +30,7 @@ Pass: public read succeeds, app prevents editing, backend rejects direct write, 
 
 ## E2E-003 — Missing/unavailable backend and retained editor text
 
-1. Open the app without `BACKEND_BASE_URL`; confirm an in-app configuration message renders and no local fallback diary is created.
+1. Open the app without `API_BASE_URL`; confirm an in-app configuration message renders and no local fallback diary is created.
 2. Configure a deliberately unavailable local API and attempt lookup/create; confirm a visible service failure and a retryable form.
 3. In an authenticated disposable diary, enter unsaved editor text, make the API unavailable, and trigger a save. Confirm a visible failure, no success indication, and text remains available for retry.
 4. Restore the API and retry; confirm the text persists only after the server confirms the write.
