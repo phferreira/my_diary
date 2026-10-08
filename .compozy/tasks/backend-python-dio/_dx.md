@@ -4,7 +4,7 @@ Public contract for the Flutter web client and the Python backend. Companion to 
 
 ## HTTP API
 
-Base URL is supplied to the Flutter build as `BACKEND_BASE_URL`; all routes use `/api/v1`. Requests and responses use JSON. IDs are opaque strings. Dates use ISO `YYYY-MM-DD`. The client never sends a Supabase credential.
+Base URL is supplied to the Flutter build as `API_BASE_URL`; all routes use `/api/v1`. Requests and responses use JSON. IDs are opaque strings. Dates use ISO `YYYY-MM-DD`. The client never sends a Supabase credential.
 
 ### Lookup a diary
 
@@ -74,10 +74,10 @@ Tokens are bearer credentials. Use `Authorization: Bearer <access_token>` on dia
 
 ## Configuration
 
-Flutter builds set `BACKEND_BASE_URL`, for example:
+Flutter builds set `API_BASE_URL`, for example:
 
 ```sh
-fvm flutter run -d chrome --dart-define=BACKEND_BASE_URL=http://localhost:8000
+fvm flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
 ```
 
 The production value is the HTTPS origin of the deployed API. It is public client configuration, never a secret. With no URL configured, app startup reports a configuration error; it does not silently switch to in-memory persistence.
