@@ -24,7 +24,7 @@ class DioDiaryApiClient implements DiaryApiClient {
       Duration connectTimeout = const Duration(seconds: 5),
       Duration receiveTimeout = const Duration(seconds: 15),
       Duration sendTimeout = const Duration(seconds: 15)}) {
-    final origin = _validateBaseUrl(baseUrl ?? AppEnvironment.backendBaseUrl);
+    final origin = _validateBaseUrl(baseUrl ?? AppEnvironment.apiBaseUrl);
     final client = dio ?? Dio();
     client.options = client.options.copyWith(
         baseUrl: origin,
@@ -122,7 +122,7 @@ class DioDiaryApiClient implements DiaryApiClient {
         uri.hasFragment ||
         (uri.path.isNotEmpty && uri.path != '/')) {
       throw const BackendConfigurationFailure(
-          'Configure BACKEND_BASE_URL as a backend HTTPS origin.');
+          'Configure API_BASE_URL as a backend HTTPS origin.');
     }
     return uri.replace(path: '').toString().replaceFirst(RegExp(r'/$'), '');
   }
