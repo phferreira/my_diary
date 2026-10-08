@@ -53,7 +53,7 @@ class AppStrings {
   static const String save = 'Salvar';
   static const String contentSaved = 'Conteúdo salvo com sucesso';
   static const String backendConfigurationMissing =
-      'Configure BACKEND_BASE_URL para conectar ao serviço de diários.';
+      'Configure API_BASE_URL para conectar ao serviço de diários.';
   static const String backendRequestFailed =
       'Não foi possível comunicar com o serviço. Tente novamente.';
   static const String entryLoadFailed =
