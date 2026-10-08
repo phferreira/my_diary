@@ -11,7 +11,7 @@
         "-d",
         "chrome",
         "--dart-define-from-file",
-        ".dev.env.json",
+        ".env.development",
         "--web-port",
         "8081",
         "--web-experimental-hot-reload"
@@ -27,7 +27,7 @@
         "-d",
         "0069268444",
         "--dart-define-from-file",
-        ".dev.env.json"
+        ".env.development"
       ]
     }
   ]
