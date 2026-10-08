@@ -113,7 +113,7 @@ Flow: Flutter repository → injected API client/Dio → HTTPS JSON API → Pyth
 ### Architectural Boundaries
 
 - `lib/core` remains framework- and transport-independent; it must not import Dio, Flutter networking, or API DTOs.
-- `lib/data` owns Dio client, request/response DTOs/mappers, and the `DiaryRepository` adapter. The composition root configures it from `BACKEND_BASE_URL`.
+- `lib/data` owns Dio client, request/response DTOs/mappers, and the `DiaryRepository` adapter. The composition root configures it from `API_BASE_URL`.
 - UI receives core entities/use cases and does not construct HTTP requests.
 - Python API handlers do not own password hashing rules or direct SQL. Domain/application services own policy; infrastructure owns PostgreSQL adapters and migrations.
 - Import tooling lives in the separate Python backend, has no Supabase SDK/client dependency, and is not imported by production request handling.
@@ -209,7 +209,7 @@ Every entry and access mutation route authenticates a token scoped to the route 
 | Separate Python backend | new | Owns API, data, auth policy and import. | Implement Python service, PostgreSQL migrations, importer, configuration and deployment contract. |
 | Existing Supabase user state | migrated | Diaries and entries must not be discarded. | Export/import and reconcile rows, IDs and sampled access/entry behavior before disabling/deleting old store. No runtime dual-write. |
 | Public HTTP API | new | Externally callable access surface. | Version `/api/v1`; short-lived scoped tokens, strict CORS, rate limits, stable error envelope. |
-| Flutter build config | modified | Backend origin is public compile-time configuration. | Add `BACKEND_BASE_URL`; require absolute HTTP(S), HTTPS except local development. Remove Supabase defines and docs. |
+| Flutter build config | modified | Backend origin is public compile-time configuration. | Add `API_BASE_URL`; require absolute HTTP(S), HTTPS except local development. Remove Supabase defines and docs. |
 | UI failure states | modified | Prior memory fallback could mask failed persistence. | Keep unsaved editor content and do not show success on API failure. |
 
 SD-013: persistent diary state is migrated losslessly in the same delivery before Supabase is retired; importer verifies row counts, IDs, unique diary/date records, and sampled access behavior. The public API is new/versioned; no compatibility shim is needed. Supabase client/config are internal hard cuts in the same change with no fallback/shim/placeholder.
@@ -224,7 +224,7 @@ Operators run a deterministic importer over a local JSON/CSV export or extracted
 
 ### Config Lifecycle
 
-- Flutter `BACKEND_BASE_URL`: required public compile-time origin; absolute HTTP(S), HTTPS outside localhost. Missing/invalid value produces visible startup configuration feedback and never selects in-memory/Supabase persistence.
+- Flutter `API_BASE_URL`: required public compile-time origin; absolute HTTP(S), HTTPS outside localhost. Missing/invalid value produces visible startup configuration feedback and never selects in-memory/Supabase persistence.
 - Backend `DATABASE_URL`: required runtime secret, never sent to client.
 - Backend `TOKEN_SIGNING_KEY`: required runtime secret with rotation procedure, never committed or sent to browser.
 - Backend `ALLOWED_ORIGINS`: explicit production origin list.
@@ -311,7 +311,7 @@ Log request ID, route, status, latency and safe error code; never log passwords,
 - Names retain existing trimmed exact-match behavior; entry date is date-only.
 - Import source is operator-provided CSV/JSON or extracted PostgreSQL dump; importer has no Supabase SDK dependency.
 - Legacy hashes remain verifiable until successful authentication upgrades them.
-- `BACKEND_BASE_URL`, `DATABASE_URL`, signing key and allowed origins are deployment contracts; exact host/platform are deployment choices.
+- `API_BASE_URL`, `DATABASE_URL`, signing key and allowed origins are deployment contracts; exact host/platform are deployment choices.
 - `LEGACY_IMPORT_FINGERPRINT_KEY` is provisioned only for the offline importer and remains stable while imported snapshots may be re-applied.
 
 ### Architecture Decision Records
