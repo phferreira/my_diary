@@ -26,7 +26,7 @@ Canonical test contract for the backend migration. Derived from `_user_stories.m
 
 - **UT-001** (happy): `BackendDiaryRepository.findByName(' Leituras ')` sends `POST /api/v1/diaries/lookup` with trimmed name and maps safe diary fields without expecting password fields.
 - **UT-002** (error): duplicate create response `409 diary_name_conflict` becomes a domain/data failure; it does not produce a diary or success navigation result.
-- **UT-009** (error): missing/malformed `BACKEND_BASE_URL` yields a deterministic configuration failure and does not construct an in-memory/Supabase fallback repository.
+- **UT-009** (error): missing/malformed `API_BASE_URL` yields a deterministic configuration failure and does not construct an in-memory/Supabase fallback repository.
 - **UT-010** (error): Dio timeout and API error envelope map to typed backend failures; a failed `PUT` is not surfaced as successful save.
 
 ### Python authentication, policy, and validation (Part II: Data Models / API Endpoints)
@@ -60,7 +60,7 @@ Canonical test contract for the backend migration. Derived from `_user_stories.m
 
 - **E2E-001** (US-001, US-002, US-003): create a protected diary, find it, unlock with its master password, load a date, save content, reload, and observe the saved content.
 - **E2E-002** (US-002, US-004): configure a public password, unlock through public access, read an entry, and verify editor controls are read-only and server rejects a write.
-- **E2E-003** (US-005): run without `BACKEND_BASE_URL`, then against an unavailable API; observe configuration/connection failure, no fallback, no false save success, and retained editor text.
+- **E2E-003** (US-005): run without `API_BASE_URL`, then against an unavailable API; observe configuration/connection failure, no fallback, no false save success, and retained editor text.
 - **E2E-004** (US-006): run operator dry-run/apply against a source fixture containing diary, dated entry, and SHA-256 password; verify import summary, authenticate with original password, and verify content/identity remain intact.
 
 ## Coverage Decisions
