@@ -6,16 +6,25 @@ GitHub Pages: https://phferreira.github.io/my_diary/
 
 ## Desenvolvimento
 
-O Flutter Web usa a API Python mantida separadamente em `../../node/my_diary_bk`. Configure a origem HTTPS pública da API por `BACKEND_BASE_URL`:
+O Flutter Web usa a API Python mantida separadamente em `../../python/my_diary_bk`. Configure a origem HTTPS pública da API por `API_BASE_URL`:
+
+Crie `.env.development` na raiz do projeto com a configuração em JSON:
+
+```json
+{
+  "API_BASE_URL": "http://localhost:8000"
+}
+```
+
+As configurações do VS Code carregam esse arquivo. Para executar pelo terminal:
 
 ```bash
-fvm flutter run -d chrome \
-  --dart-define=BACKEND_BASE_URL=http://localhost:8000
+fvm flutter run -d chrome --dart-define-from-file=.env.development
 ```
 
 HTTP é aceito apenas para `localhost` no desenvolvimento local. Builds de produção devem usar HTTPS. Sem uma URL válida, a tela de login informa a configuração ausente e nenhuma persistência local de fallback é usada.
 
-O deploy do GitHub Pages lê a variável de repositório `BACKEND_BASE_URL`. Configure esse valor com a origem HTTPS do backend.
+O deploy do GitHub Pages lê a variável de repositório `API_BASE_URL`. Configure esse valor com a origem HTTPS do backend.
 
 ## Arquitetura
 
