@@ -20,7 +20,7 @@ Add a transport boundary in Flutter's data layer so repository behavior can use 
 ## Requirements
 
 - Implement in Flutter `lib/data/`; keep `lib/core` transport-independent. Follow `_spec.md` Core Interfaces and `_dx.md`.
-- Use the Dio package, `BACKEND_BASE_URL`, configured timeouts, JSON mapping, and bearer headers. Do not add Supabase or memory fallback behavior.
+- Use the Dio package, `API_BASE_URL`, configured timeouts, JSON mapping, and bearer headers. Do not add Supabase or memory fallback behavior.
 - Keep returned tokens private to the adapter, in memory only; clear them when active diary/session changes. Never put tokens in core entities, widgets, logs, or persistent browser storage.
 
 ## Subtasks
@@ -36,7 +36,7 @@ Add a transport boundary in Flutter's data layer so repository behavior can use 
 - `lib/data/` — client, DTOs, mappers, and repository adapter.
 - `lib/core/repositories/diary_repository.dart` and `lib/core/entities/diary.dart` — stable domain contract and safe mapping targets.
 - `_spec.md` Part II: Core Interfaces and Architectural Boundaries.
-- `_dx.md` — route, payload, errors, and `BACKEND_BASE_URL` contract.
+- `_dx.md` — route, payload, errors, and `API_BASE_URL` contract.
 
 ### Related ADRs
 
