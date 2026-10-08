@@ -21,13 +21,13 @@ Connect the existing diary experience to the backend repository, including remot
 
 - Follow `_spec.md` Impact Analysis, `_uiux.md`, and `_dx.md`; preserve current workflows and product rules.
 - Replace local hash/password comparison with backend unlock and a core `DiaryAccess` result. Do not expose password material or place network logic in UI.
-- Missing/invalid `BACKEND_BASE_URL` and API failures are visible; never silently use in-memory or Supabase persistence. Failed save keeps editor content available for retry.
+- Missing/invalid `API_BASE_URL` and API failures are visible; never silently use in-memory or Supabase persistence. Failed save keeps editor content available for retry.
 - Supabase retirement as a production store is gated on task_05 reconciliation; this task removes client artifacts while keeping migration evidence and source data available until that gate passes.
 
 ## Subtasks
 
 - [ ] 3.1 Update core access result/use case and login flow to rely on backend unlock outcomes.
-- [ ] 3.2 Wire app composition from `BACKEND_BASE_URL`; render configuration, connection, and operation failures while preserving input.
+- [ ] 3.2 Wire app composition from `API_BASE_URL`; render configuration, connection, and operation failures while preserving input.
 - [ ] 3.3 Remove Supabase Flutter dependency, initialization/configuration, migration artifacts, and setup documentation/references; remove obsolete password-hash code only if unused.
 - [ ] 3.4 Run focused Flutter checks and inspect source/config for unintended remaining Supabase runtime requirements.
 
