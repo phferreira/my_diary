@@ -41,6 +41,8 @@ void main() {
       );
 
     await tester.pumpDeviceBuilder(builder);
+    tester.binding.focusManager.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
     await screenMatchesGolden(tester, 'diary_editor_page');
   });
 }
