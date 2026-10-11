@@ -34240,7 +34240,7 @@ j=i}o.aeo(new A.zH(l,new A.ZD(new A.aso(new A.aoD(p),new A.ak2(p),new A.aG9(p)),
 o.Vx()
 return A.L(null,r)}})
 return A.M($async$b06,r)},
-bmD(){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,c,b=null,a=B.c.bP("")
+bmD(){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,c,b=null,a=B.c.bP("https://api-my-diary.cyberdyne.sarl/")
 if(a.length===0)return B.aN3
 try{r=A.b6m(a)
 a=r==null
