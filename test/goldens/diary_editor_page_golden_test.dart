@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -15,6 +17,14 @@ void main() {
   });
 
   testGoldens('diary editor layouts', (WidgetTester tester) async {
+    final previousComparator = goldenFileComparator;
+    goldenFileComparator = _TolerantGoldenFileComparator(
+      Uri.parse('test/goldens/diary_editor_page_golden_test.dart'),
+      // Allow minor text rasterization differences between Linux environments.
+      precisionTolerance: 0.0003,
+    );
+    addTearDown(() => goldenFileComparator = previousComparator);
+
     final repository = InMemoryDiaryRepository();
 
     final builder = DeviceBuilder()
@@ -45,4 +55,29 @@ void main() {
     await tester.pumpAndSettle();
     await screenMatchesGolden(tester, 'diary_editor_page');
   });
+}
+
+class _TolerantGoldenFileComparator extends LocalFileComparator {
+  _TolerantGoldenFileComparator(
+    super.testFile, {
+    required this.precisionTolerance,
+  });
+
+  final double precisionTolerance;
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+    if (result.passed || result.diffPercent <= precisionTolerance) {
+      result.dispose();
+      return true;
+    }
+
+    final error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
+  }
 }
