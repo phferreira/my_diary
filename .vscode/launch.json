@@ -13,8 +13,7 @@
         "--dart-define-from-file",
         ".env.development",
         "--web-port",
-        "8081",
-        "--web-experimental-hot-reload"
+        "8080"
       ]
     },
     {
